@@ -70,6 +70,9 @@ def setup_logging(level: str = "INFO") -> None:
     root = logging.getLogger()
     root.handlers[:] = [h]
     root.setLevel(level)
+    # The MongoDB driver logs whole command documents at DEBUG (encrypted secrets, email bodies):
+    # keep it at INFO whatever the root level is.
+    logging.getLogger("pymongo").setLevel(logging.INFO)
 
 
 def get_logger(name: str) -> logging.Logger:

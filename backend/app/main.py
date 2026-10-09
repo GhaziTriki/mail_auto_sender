@@ -8,7 +8,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from .api import dashboard, items, llm_keys, meta, oauth_outlook, runs, senders
+from .api import dashboard, items, llm_keys, meta, oauth_outlook, runs, senders, status
 from .config import get_settings
 from .crypto import validate_secret_key
 from .db import ensure_indexes
@@ -54,6 +54,7 @@ for r in (
     runs.router,
     items.router,
     dashboard.router,
+    status.router,
 ):
     app.include_router(r)
 

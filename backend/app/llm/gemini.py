@@ -9,9 +9,9 @@ SYSTEM_INSTRUCTION = (
     "Decide whether each email address belongs to a specific person or to a company/generic mailbox. "
     'Personal patterns (firstname.lastname@, initials) -> "human". Generic mailboxes (info@, contact@, hr@, '
     'rh@, jobs@, careers@, recrutement@, hello@, support@) -> "company" even if a person name column is filled. '
-    'Return a cleaned person name (proper case) for humans.'
+    "Return a cleaned person name (proper case) for humans."
     "Return a cleaned company name for companies, derive from the email domain when it's not mentionned explicitly."
-    "Return honorific \"Mr\" or \"Ms\" only when the first "
+    'Return honorific "Mr" or "Ms" only when the first '
     "name is unambiguous; otherwise null. Never invent data."
 )
 
@@ -52,7 +52,12 @@ def classify_exception(exc: BaseException) -> LLMError:
     low = text.lower()
     if code == 429 or "resource_exhausted" in low or ("429" in low and "quota" in low):
         return LLMError("quota", text[:300])
-    if code in (400, 401, 403) or "api key not valid" in low or "api_key_invalid" in low or "permission_denied" in low:
+    if (
+        code in (400, 401, 403)
+        or "api key not valid" in low
+        or "api_key_invalid" in low
+        or "permission_denied" in low
+    ):
         return LLMError("auth", text[:300])
     return LLMError("transient", text[:300])
 
@@ -93,7 +98,10 @@ def check_key(api_key: str) -> tuple[bool, str, bool]:
     if get_settings().llm_fake:
         return True, "Fake LLM mode: key accepted", False
     try:
-        call_gemini(api_key, [{"id": "check", "email": "jane.doe@example.com", "person_names": [], "company_names": []}])
+        call_gemini(
+            api_key,
+            [{"id": "check", "email": "jane.doe@example.com", "person_names": [], "company_names": []}],
+        )
         return True, "Key works", False
     except LLMError as e:
         return False, f"{e.kind}: {e.detail}", e.kind == "auth"

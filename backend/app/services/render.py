@@ -1,4 +1,5 @@
 """Template rendering by regex substitution only (spec 8.4). No eval, no Jinja."""
+
 from __future__ import annotations
 
 import re
@@ -66,10 +67,15 @@ def substitute(text: str, values: dict[str, str], row: dict, warnings: list[str]
 def render_item(run: dict, item: dict) -> dict:
     """Render greeting/subject/body for an item from its classification fields."""
     warnings: list[str] = []
-    greeting = build_greeting(run["greeting"], item.get("kind"), item.get("name"), item.get("company"),
-                              item.get("honorific"))
-    values = {"greeting": greeting, "name": item.get("name") or "", "company": item.get("company") or "",
-              "email": item.get("email_norm") or ""}
+    greeting = build_greeting(
+        run["greeting"], item.get("kind"), item.get("name"), item.get("company"), item.get("honorific")
+    )
+    values = {
+        "greeting": greeting,
+        "name": item.get("name") or "",
+        "company": item.get("company") or "",
+        "email": item.get("email_norm") or "",
+    }
     tpl = run["template"]
     row = item.get("row") or {}
     subject = substitute(tpl.get("subject", ""), values, row, warnings)

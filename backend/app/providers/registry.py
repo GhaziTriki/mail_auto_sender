@@ -20,11 +20,15 @@ def get_provider(name: str) -> Provider:
         return _overrides[name]
     if name == "gmail":
         from .gmail import GmailProvider
+
         return GmailProvider()
     if name == "outlook":
         if not get_settings().outlook_enabled:
-            raise Unprocessable("Outlook is not activated. See docs/providers/outlook.md", code="outlook_disabled")
+            raise Unprocessable(
+                "Outlook is not activated. See docs/providers/outlook.md", code="outlook_disabled"
+            )
         from .outlook import OutlookProvider
+
         return OutlookProvider()
     raise Unprocessable(f"Unknown provider {name}", code="unknown_provider")
 

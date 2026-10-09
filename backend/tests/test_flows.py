@@ -73,7 +73,9 @@ def test_filters_preview_and_prepare_respects_filters(client):
     rid = api_run(client, "flt", CSV_BASIC)
     r = client.get(f"/api/runs/{rid}/columns/Country/values").json()
     assert {v["value"]: v["count"] for v in r["values"]} == {"TN": 4, "FR": 1}
-    r = client.post(f"/api/runs/{rid}/filters/preview", json={"filters": [{"column": "Country", "values": ["FR"]}]})
+    r = client.post(
+        f"/api/runs/{rid}/filters/preview", json={"filters": [{"column": "Country", "values": ["FR"]}]}
+    )
     assert r.json() == {"matching_rows": 1, "with_valid_email": 1}
     client.patch(f"/api/runs/{rid}", json={"filters": [{"column": "Country", "values": ["FR"]}]})
     prepare_ready(client, rid)
@@ -96,7 +98,9 @@ def test_rerender_keeps_edited_items(client, provider):
     first = items(client, rid)[0]
     r = client.patch(f"/api/items/{first['id']}", json={"subject": "Custom subject"})
     assert r.json()["edited"] is True
-    client.patch(f"/api/runs/{rid}", json={"template": {"subject": "New {{company}}", "body": "{{greeting}} v2"}})
+    client.patch(
+        f"/api/runs/{rid}", json={"template": {"subject": "New {{company}}", "body": "{{greeting}} v2"}}
+    )
     got = items(client, rid)
     assert got[0]["subject"] == "Custom subject"
     assert got[1]["subject"] == "New Co1" and got[1]["body"].endswith("v2")
@@ -136,14 +140,17 @@ def test_send_once_threaded_race(client, provider):
     assert sts == ["needs_review", "needs_review", "needs_review", "sent"]
 
 
-@pytest.mark.parametrize("outcome,expect_status,lock_kept", [
-    (SendResult("sent", "ok", message_id="<m@x>"), "sent", True),
-    (SendResult("unknown", "lost"), "unknown", True),
-    (SendResult("permanent", "bad", recipient_specific=True), "failed", False),
-    (SendResult("transient", "421"), "pending", False),
-    (SendResult("auth", "535"), "pending", False),
-    (SendResult("quota", "5.4.5"), "pending", False),
-])
+@pytest.mark.parametrize(
+    "outcome,expect_status,lock_kept",
+    [
+        (SendResult("sent", "ok", message_id="<m@x>"), "sent", True),
+        (SendResult("unknown", "lost"), "unknown", True),
+        (SendResult("permanent", "bad", recipient_specific=True), "failed", False),
+        (SendResult("transient", "421"), "pending", False),
+        (SendResult("auth", "535"), "pending", False),
+        (SendResult("quota", "5.4.5"), "pending", False),
+    ],
+)
 def test_lock_release_and_keep(client, provider, outcome, expect_status, lock_kept):
     email = f"lock{expect_status}{lock_kept}{outcome.outcome}@x.com".lower()
     rid = ready_started(client, f"lk-{outcome.outcome}", one(email))
@@ -186,8 +193,16 @@ def test_expired_lease_becomes_unknown_never_resent(client, provider):
     rid = ready_started(client, "crash", one("crash@x.com"))
     it = get_db().run_items.find_one({"run_id": __import__("bson").ObjectId(rid)})
     get_db().contacts.update_one({"_id": it["contact_id"]}, {"$set": {"sent_item_id": it["_id"]}})
-    get_db().run_items.update_one({"_id": it["_id"]}, {"$set": {
-        "status": "sending", "lease_until": clock.now() - timedelta(seconds=5), "sender_address": "a@gmail.com"}})
+    get_db().run_items.update_one(
+        {"_id": it["_id"]},
+        {
+            "$set": {
+                "status": "sending",
+                "lease_until": clock.now() - timedelta(seconds=5),
+                "sender_address": "a@gmail.com",
+            }
+        },
+    )
     assert recover_expired_leases() == 1
     cur = items(client, rid)[0]
     assert cur["status"] == "unknown" and cur["attempts"][-1]["detail"] == "lease expired"
@@ -217,7 +232,9 @@ def test_fill_first_rotation_and_paused_quota(client, provider):
         clock.advance(minutes=1)
     assert client.get(f"/api/runs/{rid}").json()["status"] == "paused_quota"
     r = client.post(f"/api/runs/{rid}/resume")
-    assert r.status_code == 409 and r.json()["code"] == "no_sender_available" and r.json()["earliest_reset_at"]
+    assert (
+        r.status_code == 409 and r.json()["code"] == "no_sender_available" and r.json()["earliest_reset_at"]
+    )
     b = add_sender("b@gmail.com", cap=10)
     r = client.patch(f"/api/runs/{rid}", json={"sender_ids": [str(idle), str(a), str(b)]})
     assert r.status_code == 200
@@ -248,7 +265,9 @@ def test_retry_schedule_then_failed(client, provider):
     tick()
     it = items(client, rid)[0]
     assert it["status"] == "pending" and it["attempt_count"] == 1
-    assert clock.as_utc(__import__("dateutil.parser", fromlist=["x"]).isoparse(it["next_attempt_at"])) == clock.now() + timedelta(seconds=60)
+    assert clock.as_utc(
+        __import__("dateutil.parser", fromlist=["x"]).isoparse(it["next_attempt_at"])
+    ) == clock.now() + timedelta(seconds=60)
     tick()  # not due yet: nothing sent
     assert len(provider.calls) == 1
     clock.advance(seconds=61)
@@ -287,7 +306,9 @@ def test_auth_failed_sender_skipped_item_not_failed(client, provider):
     assert drain(client, rid) == "completed"
     assert get_db().senders.find_one({"_id": s1})["status"] == "auth_failed"
     its = items(client, rid)
-    assert [i["status"] for i in its] == ["sent", "sent"] and all(i["sender_address"] == "two@gmail.com" for i in its)
+    assert [i["status"] for i in its] == ["sent", "sent"] and all(
+        i["sender_address"] == "two@gmail.com" for i in its
+    )
     assert its[0]["attempts"][0]["outcome"] == "auth" and its[0]["attempt_count"] == 0
 
 
@@ -304,14 +325,19 @@ def _llm_run(client, name, csv, n_keys=2):
 def test_llm_partial_results_retried_then_rules_fallback(client, provider, settings, monkeypatch):
     settings.llm_fake = False
     from app.llm import gemini
+
     calls = []
 
     def fake_call(api_key, payload):
         calls.append(len(payload))
         ids = [p["id"] for p in payload]
         if len(calls) == 1:  # return only the first id, plus junk entries
-            return [{"id": ids[0], "kind": "company", "name": None, "company": "Z", "honorific": None},
-                    {"id": ids[1], "kind": "bogus"}, "junk", {"id": "unknown-id", "kind": "human"}]
+            return [
+                {"id": ids[0], "kind": "company", "name": None, "company": "Z", "honorific": None},
+                {"id": ids[1], "kind": "bogus"},
+                "junk",
+                {"id": "unknown-id", "kind": "human"},
+            ]
         return []  # always empty afterwards -> fallback to rules
 
     monkeypatch.setattr(gemini, "call_gemini", fake_call)
@@ -328,6 +354,7 @@ def test_llm_key_rotation_on_429_and_paused_llm_and_switch_to_rules(client, prov
     settings.llm_fake = False
     from app.llm import gemini
     from app.llm.gemini import LLMError
+
     mode = {"fail": "quota"}
     used = []
 
@@ -337,7 +364,10 @@ def test_llm_key_rotation_on_429_and_paused_llm_and_switch_to_rules(client, prov
             raise LLMError("quota", "429 RESOURCE_EXHAUSTED")
         if mode["fail"] == "quota":
             raise LLMError("quota", "429 RESOURCE_EXHAUSTED")
-        return [{"id": p["id"], "kind": "company", "name": None, "company": "C", "honorific": None} for p in payload]
+        return [
+            {"id": p["id"], "kind": "company", "name": None, "company": "C", "honorific": None}
+            for p in payload
+        ]
 
     monkeypatch.setattr(gemini, "call_gemini", fake_call)
     rid, keys = _llm_run(client, "llmrot", many(2, "r"))
@@ -371,6 +401,7 @@ def test_llm_auth_error_marks_key_and_transient_keeps_state(client, provider, se
     settings.llm_fake = False
     from app.llm import gemini
     from app.llm.gemini import LLMError
+
     state = {"n": 0}
 
     def fake_call(api_key, payload):
@@ -379,7 +410,10 @@ def test_llm_auth_error_marks_key_and_transient_keeps_state(client, provider, se
             raise LLMError("auth", "400 API key not valid")
         if state["n"] == 2:
             raise LLMError("transient", "503")
-        return [{"id": p["id"], "kind": "company", "name": None, "company": "C", "honorific": None} for p in payload]
+        return [
+            {"id": p["id"], "kind": "company", "name": None, "company": "C", "honorific": None}
+            for p in payload
+        ]
 
     monkeypatch.setattr(gemini, "call_gemini", fake_call)
     rid, keys = _llm_run(client, "llmauth", many(2, "t"))
@@ -414,7 +448,9 @@ def test_manual_approval_flow_next_and_test_send(client, provider):
         tick()
     assert provider.calls == []  # nothing without approval
     nxt = client.get(f"/api/runs/{rid}/next").json()
-    assert nxt["item"]["contact_line"]["email"] == "m0.x@co0.com" and nxt["sender"]["address"] == "a@gmail.com"
+    assert (
+        nxt["item"]["contact_line"]["email"] == "m0.x@co0.com" and nxt["sender"]["address"] == "a@gmail.com"
+    )
     t = client.post(f"/api/runs/{rid}/test-send", json={}).json()
     assert t["ok"] and provider.calls[-1][1] == "a@gmail.com" and provider.calls[-1][2].startswith("[TEST] ")
     assert items(client, rid, "pending")[0]["status"] == "pending"
@@ -463,7 +499,9 @@ def test_config_lock_and_delete_keeps_contact_lock(client, provider):
     assert r.status_code == 409 and r.json()["code"] == "config_locked"
     r = client.post(f"/api/runs/{rid}/cv", files={"file": ("cv.pdf", b"%PDF-1", "application/pdf")})
     assert r.status_code == 409 and r.json()["code"] == "config_locked"
-    assert client.patch(f"/api/runs/{rid}", json={"approval": "manual"}).status_code == 200  # controls stay allowed
+    assert (
+        client.patch(f"/api/runs/{rid}", json={"approval": "manual"}).status_code == 200
+    )  # controls stay allowed
     assert client.delete(f"/api/runs/{rid}").status_code == 200
     c = contact("cfg@x.com")
     assert c["sent_item_id"] is not None and c["sent_info"]["run_name"] == "cfg"
@@ -490,10 +528,13 @@ def test_unprepare_and_status_guards(client, provider):
 # ------------------------------------------------------------------ 15 secrets
 def test_secrets_never_in_responses_or_logs(client, provider, caplog):
     from app.logging import JsonFormatter
+
     secret_pw, secret_key = "SUPERSECRETPASSWORD12", "AIzaSyFAKEKEYFAKEKEYFAKEKEY1234"
     caplog.set_level(logging.DEBUG)
-    r = client.post("/api/senders/gmail", json={"address": "leak@gmail.com", "display_name": "L",
-                                                "app_password": secret_pw, "daily_cap": 10})
+    r = client.post(
+        "/api/senders/gmail",
+        json={"address": "leak@gmail.com", "display_name": "L", "app_password": secret_pw, "daily_cap": 10},
+    )
     assert r.status_code == 200 and r.json()["has_secret"] is True
     sid = r.json()["id"]
     k = client.post("/api/llm-keys", json={"label": "k", "api_key": secret_key}).json()
@@ -522,6 +563,7 @@ def test_secrets_never_in_responses_or_logs(client, provider, caplog):
     assert "secret_enc" not in blob
     # redaction helper itself
     from app.logging import redact_text
+
     assert secret_key not in redact_text(f"error with key {secret_key} and app_password={secret_pw}")
     assert secret_pw not in redact_text(f"app_password={secret_pw}")
 
@@ -529,6 +571,7 @@ def test_secrets_never_in_responses_or_logs(client, provider, caplog):
 def test_secret_key_required_to_start(settings, db):
     from app.crypto import reset, validate_secret_key
     from app.errors import ConfigError
+
     reset()
     with pytest.raises(ConfigError):
         validate_secret_key("")
@@ -543,5 +586,8 @@ def test_header_injection_rejected(client, provider):
     assert r.status_code == 422
     from app.providers.base import OutgoingEmail
     from app.providers.message import build_message
+
     with pytest.raises(Unprocessable):
-        build_message(OutgoingEmail("N", "a@b.com", "x@y.com\nBcc: e@e.com", None, "s", "b", "cv.pdf", b"%PDF"))
+        build_message(
+            OutgoingEmail("N", "a@b.com", "x@y.com\nBcc: e@e.com", None, "s", "b", "cv.pdf", b"%PDF")
+        )

@@ -1,4 +1,5 @@
 """Microsoft identity platform: auth-code + PKCE for a public client (spec 10.2). No client secret."""
+
 from __future__ import annotations
 
 import base64
@@ -37,9 +38,17 @@ def make_pkce() -> tuple[str, str]:
 
 def authorize_url(state: str, challenge: str) -> str:
     s = get_settings()
-    q = {"client_id": s.outlook_client_id, "response_type": "code", "redirect_uri": s.outlook_redirect_uri,
-         "response_mode": "query", "scope": SCOPES, "state": state, "code_challenge": challenge,
-         "code_challenge_method": "S256", "prompt": "select_account"}
+    q = {
+        "client_id": s.outlook_client_id,
+        "response_type": "code",
+        "redirect_uri": s.outlook_redirect_uri,
+        "response_mode": "query",
+        "scope": SCOPES,
+        "state": state,
+        "code_challenge": challenge,
+        "code_challenge_method": "S256",
+        "prompt": "select_account",
+    }
     return AUTHORITY + "authorize?" + urlencode(q)
 
 
@@ -51,17 +60,33 @@ def _token_request(data: dict) -> dict:
     except Exception:
         body = {}
     if r.status_code != 200 or "access_token" not in body:
-        raise OAuthError(body.get("error", f"http_{r.status_code}"), body.get("error_description", r.text[:200]))
+        raise OAuthError(
+            body.get("error", f"http_{r.status_code}"), body.get("error_description", r.text[:200])
+        )
     return body
 
 
 def exchange_code(code: str, verifier: str) -> dict:
     s = get_settings()
-    return _token_request({"client_id": s.outlook_client_id, "grant_type": "authorization_code", "code": code,
-                           "redirect_uri": s.outlook_redirect_uri, "code_verifier": verifier, "scope": SCOPES})
+    return _token_request(
+        {
+            "client_id": s.outlook_client_id,
+            "grant_type": "authorization_code",
+            "code": code,
+            "redirect_uri": s.outlook_redirect_uri,
+            "code_verifier": verifier,
+            "scope": SCOPES,
+        }
+    )
 
 
 def refresh(refresh_token: str) -> dict:
     s = get_settings()
-    return _token_request({"client_id": s.outlook_client_id, "grant_type": "refresh_token",
-                           "refresh_token": refresh_token, "scope": SCOPES})
+    return _token_request(
+        {
+            "client_id": s.outlook_client_id,
+            "grant_type": "refresh_token",
+            "refresh_token": refresh_token,
+            "scope": SCOPES,
+        }
+    )

@@ -1,4 +1,5 @@
 """LLM batch classification with validation, retries and key rotation (spec 8.6)."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -28,12 +29,18 @@ def build_payload(run: dict, items: list[dict]) -> list[dict]:
     out = []
     for it in items:
         row = it.get("row") or {}
-        out.append({
-            "id": str(it["_id"]),
-            "email": it["email_norm"],
-            "person_names": [v for c in rec.get("human_name_columns", []) if (v := (row.get(c) or "").strip())],
-            "company_names": [v for c in rec.get("company_name_columns", []) if (v := (row.get(c) or "").strip())],
-        })
+        out.append(
+            {
+                "id": str(it["_id"]),
+                "email": it["email_norm"],
+                "person_names": [
+                    v for c in rec.get("human_name_columns", []) if (v := (row.get(c) or "").strip())
+                ],
+                "company_names": [
+                    v for c in rec.get("company_name_columns", []) if (v := (row.get(c) or "").strip())
+                ],
+            }
+        )
     return out
 
 
@@ -56,8 +63,12 @@ def validate_response(sent_ids: set[str], data: list) -> dict[str, dict]:
             continue
         if hon not in (None, "Mr", "Ms"):
             continue
-        good[_id] = {"kind": kind, "name": (name or "").strip() or None, "company": (company or "").strip() or None,
-                     "honorific": hon}
+        good[_id] = {
+            "kind": kind,
+            "name": (name or "").strip() or None,
+            "company": (company or "").strip() or None,
+            "honorific": hon,
+        }
     return good
 
 
@@ -86,7 +97,9 @@ def classify_batch(run: dict, items: list[dict]) -> BatchOutcome:
             data = _call(key, payload)
             if key is not None:
                 keys.record_request(key["_id"])
-            return BatchOutcome("ok", results=validate_response(sent_ids, data), key_id=key["_id"] if key else None)
+            return BatchOutcome(
+                "ok", results=validate_response(sent_ids, data), key_id=key["_id"] if key else None
+            )
         except LLMError as e:
             if key is not None:
                 keys.record_request(key["_id"])  # the request reached Google

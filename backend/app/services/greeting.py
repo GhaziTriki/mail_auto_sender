@@ -1,4 +1,5 @@
 """Greeting builder (spec 8.4)."""
+
 from __future__ import annotations
 
 import re
@@ -18,8 +19,9 @@ def _clean(s: str) -> str:
     return s
 
 
-def build_greeting(cfg: dict, kind: str | None, name: str | None, company: str | None,
-                   honorific: str | None) -> str:
+def build_greeting(
+    cfg: dict, kind: str | None, name: str | None, company: str | None, honorific: str | None
+) -> str:
     cfg = {**DEFAULT_GREETING, **(cfg or {})}
     name = (name or "").strip()
     company = (company or "").strip()
@@ -30,6 +32,10 @@ def build_greeting(cfg: dict, kind: str | None, name: str | None, company: str |
         tpl = cfg["company_template"]
     else:
         tpl = cfg["fallback_template"]
-    out = (tpl.replace("{salutation}", cfg["salutation"]).replace("{honorific}", hon)
-           .replace("{name}", name).replace("{company}", company))
+    out = (
+        tpl.replace("{salutation}", cfg["salutation"])
+        .replace("{honorific}", hon)
+        .replace("{name}", name)
+        .replace("{company}", company)
+    )
     return _clean(out)

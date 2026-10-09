@@ -1,4 +1,5 @@
 """Microsoft Graph sendMail (spec 10.2)."""
+
 from __future__ import annotations
 
 import base64
@@ -31,8 +32,11 @@ def get_me(access_token: str) -> dict:
 
 def token_blob(tokens: dict) -> dict:
     exp = clock.now() + timedelta(seconds=int(tokens.get("expires_in", 3600)))
-    return {"refresh_token": tokens.get("refresh_token"), "access_token": tokens["access_token"],
-            "expires_at": exp.isoformat()}
+    return {
+        "refresh_token": tokens.get("refresh_token"),
+        "access_token": tokens["access_token"],
+        "expires_at": exp.isoformat(),
+    }
 
 
 def _load(sender: dict) -> dict:
@@ -42,7 +46,9 @@ def _load(sender: dict) -> dict:
 def _save(sender: dict, blob: dict) -> None:
     enc = encrypt(json.dumps(blob))
     sender["secret_enc"] = enc
-    get_db().senders.update_one({"_id": sender["_id"]}, {"$set": {"secret_enc": enc, "updated_at": clock.now()}})
+    get_db().senders.update_one(
+        {"_id": sender["_id"]}, {"$set": {"secret_enc": enc, "updated_at": clock.now()}}
+    )
 
 
 def _refresh(sender: dict, blob: dict) -> dict:
@@ -56,6 +62,7 @@ def _refresh(sender: dict, blob: dict) -> dict:
 
 def _expires_soon(blob: dict) -> bool:
     from datetime import datetime
+
     try:
         exp = clock.as_utc(datetime.fromisoformat(blob["expires_at"]))
     except Exception:
@@ -68,9 +75,14 @@ def _payload(email: OutgoingEmail) -> dict:
         "subject": email.subject,
         "body": {"contentType": "Text", "content": email.body_text},
         "toRecipients": [{"emailAddress": {"address": email.to}}],
-        "attachments": [{"@odata.type": "#microsoft.graph.fileAttachment", "name": email.attachment_name,
-                         "contentType": "application/pdf",
-                         "contentBytes": base64.b64encode(email.attachment_bytes).decode()}],
+        "attachments": [
+            {
+                "@odata.type": "#microsoft.graph.fileAttachment",
+                "name": email.attachment_name,
+                "contentType": "application/pdf",
+                "contentBytes": base64.b64encode(email.attachment_bytes).decode(),
+            }
+        ],
     }
     if email.reply_to:
         msg["replyTo"] = [{"emailAddress": {"address": email.reply_to}}]
@@ -114,19 +126,27 @@ class OutlookProvider:
             me = get_me(blob["access_token"])
             return CheckResult(True, f"Signed in as {me.get('mail') or me.get('userPrincipalName')}")
         except oauth.OAuthError as e:
-            return CheckResult(False, f"{e.code}: {e.detail}", auth_failed=e.code in ("invalid_grant", "http_401",
-                                                                                       "interaction_required"))
+            return CheckResult(
+                False,
+                f"{e.code}: {e.detail}",
+                auth_failed=e.code in ("invalid_grant", "http_401", "interaction_required"),
+            )
         except Exception as e:
             return CheckResult(False, f"{type(e).__name__}: {e}")
 
     def _post(self, access: str, email: OutgoingEmail):
         with _factory() as c:
-            return c.post(f"{GRAPH}/me/sendMail", json=_payload(email),
-                          headers={"Authorization": f"Bearer {access}", "Content-Type": "application/json"})
+            return c.post(
+                f"{GRAPH}/me/sendMail",
+                json=_payload(email),
+                headers={"Authorization": f"Bearer {access}", "Content-Type": "application/json"},
+            )
 
     def send(self, sender: dict, email: OutgoingEmail) -> SendResult:
         if has_crlf(email.to, email.subject, email.reply_to):
-            return SendResult("permanent", "Header fields must not contain line breaks", recipient_specific=True)
+            return SendResult(
+                "permanent", "Header fields must not contain line breaks", recipient_specific=True
+            )
         try:
             blob = _load(sender)
             if _expires_soon(blob):

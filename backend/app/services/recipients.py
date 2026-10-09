@@ -1,4 +1,5 @@
 """Recipient extraction (spec 8.3)."""
+
 from __future__ import annotations
 
 import re

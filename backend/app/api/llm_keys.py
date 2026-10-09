@@ -46,7 +46,12 @@ class KeyPatch(BaseModel):
 
 @router.get("")
 def list_keys():
-    return [key_view(k) for k in get_db().llm_keys.find({"user_id": current_user_id(), "deleted_at": None}).sort("created_at", 1)]
+    return [
+        key_view(k)
+        for k in get_db()
+        .llm_keys.find({"user_id": current_user_id(), "deleted_at": None})
+        .sort("created_at", 1)
+    ]
 
 
 @router.post("")
@@ -55,10 +60,21 @@ def add_key(body: KeyIn):
     if cap < 1:
         raise Unprocessable("daily_cap must be at least 1", code="invalid_cap")
     now = clock.now()
-    doc = {"user_id": current_user_id(), "provider": "gemini", "label": body.label.strip(),
-           "secret_enc": encrypt(body.api_key.strip()), "daily_cap": cap, "used_today": 0, "day_key": today_pt(now),
-           "status": "active", "blocked_until": None, "last_error": None, "deleted_at": None,
-           "created_at": now, "updated_at": now}
+    doc = {
+        "user_id": current_user_id(),
+        "provider": "gemini",
+        "label": body.label.strip(),
+        "secret_enc": encrypt(body.api_key.strip()),
+        "daily_cap": cap,
+        "used_today": 0,
+        "day_key": today_pt(now),
+        "status": "active",
+        "blocked_until": None,
+        "last_error": None,
+        "deleted_at": None,
+        "created_at": now,
+        "updated_at": now,
+    }
     kid = get_db().llm_keys.insert_one(doc).inserted_id
     return key_view(get_db().llm_keys.find_one({"_id": kid}))
 

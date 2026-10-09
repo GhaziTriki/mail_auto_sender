@@ -1,4 +1,5 @@
 """Classification unit for a `preparing` run (spec 9.3)."""
+
 from __future__ import annotations
 
 from datetime import timedelta
@@ -9,15 +10,20 @@ from ..db import get_db
 from ..llm.classify import MAX_LLM_ATTEMPTS, classify_batch
 from ..services.prepare import apply_classification, rules_result
 
-UNCLASSIFIED = {"classified": False, "email_norm": {"$ne": None},
-                "status": {"$in": ["pending", "needs_review"]}}
+UNCLASSIFIED = {
+    "classified": False,
+    "email_norm": {"$ne": None},
+    "status": {"$in": ["pending", "needs_review"]},
+}
 
 
 def _finish_if_done(run: dict) -> None:
     db = get_db()
     if db.run_items.count_documents({"run_id": run["_id"], **UNCLASSIFIED}) == 0:
-        db.runs.update_one({"_id": run["_id"], "status": "preparing"},
-                           {"$set": {"status": "ready", "updated_at": clock.now()}})
+        db.runs.update_one(
+            {"_id": run["_id"], "status": "preparing"},
+            {"$set": {"status": "ready", "updated_at": clock.now()}},
+        )
 
 
 def classify_unit(run: dict) -> None:
@@ -25,7 +31,9 @@ def classify_unit(run: dict) -> None:
     s = get_settings()
     now = clock.now()
     if run.get("mode") == "rules":
-        items = list(db.run_items.find({"run_id": run["_id"], **UNCLASSIFIED}).sort("row_index", 1).limit(200))
+        items = list(
+            db.run_items.find({"run_id": run["_id"], **UNCLASSIFIED}).sort("row_index", 1).limit(200)
+        )
         for it in items:
             apply_classification(run, it, rules_result(run, it))
         _finish_if_done(run)
@@ -34,8 +42,11 @@ def classify_unit(run: dict) -> None:
     nxt = clock.as_utc(run.get("next_llm_at"))
     if nxt is not None and nxt > now:
         return
-    items = list(db.run_items.find({"run_id": run["_id"], **UNCLASSIFIED}).sort(
-        [("llm_attempts", 1), ("row_index", 1)]).limit(s.llm_batch_size))
+    items = list(
+        db.run_items.find({"run_id": run["_id"], **UNCLASSIFIED})
+        .sort([("llm_attempts", 1), ("row_index", 1)])
+        .limit(s.llm_batch_size)
+    )
     if not items:
         _finish_if_done(run)
         return
@@ -53,9 +64,17 @@ def classify_unit(run: dict) -> None:
 
     out = classify_batch(run, items)
     if out.status == "paused":
-        db.runs.update_one({"_id": run["_id"], "status": "preparing"}, {"$set": {
-            "status": "paused_llm", "pause_reason": "llm_exhausted", "pause_detail": out.pause_detail,
-            "updated_at": clock.now()}})
+        db.runs.update_one(
+            {"_id": run["_id"], "status": "preparing"},
+            {
+                "$set": {
+                    "status": "paused_llm",
+                    "pause_reason": "llm_exhausted",
+                    "pause_detail": out.pause_detail,
+                    "updated_at": clock.now(),
+                }
+            },
+        )
         return
     gap = clock.now() + timedelta(seconds=s.llm_min_interval_s)
     db.runs.update_one({"_id": run["_id"]}, {"$set": {"next_llm_at": gap}})

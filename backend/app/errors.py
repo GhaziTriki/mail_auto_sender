@@ -7,7 +7,13 @@ class AppError(Exception):
     status_code = 400
     code = "error"
 
-    def __init__(self, detail: str, code: str | None = None, status_code: int | None = None, extra: dict[str, Any] | None = None):
+    def __init__(
+        self,
+        detail: str,
+        code: str | None = None,
+        status_code: int | None = None,
+        extra: dict[str, Any] | None = None,
+    ):
         super().__init__(detail)
         self.detail = detail
         if code:

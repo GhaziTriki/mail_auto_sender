@@ -1,4 +1,5 @@
 """Run lifecycle control (spec 6, 9.1, 9.4, 9.7, 11)."""
+
 from __future__ import annotations
 
 from bson import ObjectId
@@ -19,7 +20,7 @@ PAUSED = ("paused_user", "paused_quota", "paused_llm", "paused_errors")
 DEFAULT_TEMPLATE = {
     "subject": "Internship application",
     "body": "{{greeting}}\n\nI am writing to apply for an internship at {{company}}. Please find my CV attached.\n\n"
-            "Thank you for your time.\n\nBest regards",
+    "Thank you for your time.\n\nBest regards",
 }
 LOCKED_FIELDS = {"filters", "recipient", "template", "greeting", "rules", "mode"}
 
@@ -38,15 +39,40 @@ def create_run(name: str) -> dict:
     s = get_settings()
     now = clock.now()
     doc = {
-        "user_id": current_user_id(), "name": name, "name_lower": name.lower(), "status": "draft",
-        "pause_reason": None, "pause_detail": None, "created_at": now, "updated_at": now, "started_at": None,
-        "first_send_at": None, "source_file": None, "columns": [], "row_count": 0, "cv_file": None, "filters": [],
+        "user_id": current_user_id(),
+        "name": name,
+        "name_lower": name.lower(),
+        "status": "draft",
+        "pause_reason": None,
+        "pause_detail": None,
+        "created_at": now,
+        "updated_at": now,
+        "started_at": None,
+        "first_send_at": None,
+        "source_file": None,
+        "columns": [],
+        "row_count": 0,
+        "cv_file": None,
+        "filters": [],
         "recipient": {"email_column": None, "human_name_columns": [], "company_name_columns": []},
-        "mode": "rules", "rules": {"kind": "human_if_available"}, "greeting": dict(DEFAULT_GREETING),
-        "template": dict(DEFAULT_TEMPLATE), "reply_to": None, "approval": "manual", "sender_ids": [],
-        "senders_snapshot": [], "llm_key_ids": [], "delay_min_s": s.send_delay_min_s, "delay_max_s": s.send_delay_max_s,
-        "max_retries": s.max_retries, "retry_delays_s": list(s.retry_delays_s), "breaker_threshold": s.breaker_threshold,
-        "consecutive_failures": 0, "next_send_at": None, "next_llm_at": None, "tz_hint": None,
+        "mode": "rules",
+        "rules": {"kind": "human_if_available"},
+        "greeting": dict(DEFAULT_GREETING),
+        "template": dict(DEFAULT_TEMPLATE),
+        "reply_to": None,
+        "approval": "manual",
+        "sender_ids": [],
+        "senders_snapshot": [],
+        "llm_key_ids": [],
+        "delay_min_s": s.send_delay_min_s,
+        "delay_max_s": s.send_delay_max_s,
+        "max_retries": s.max_retries,
+        "retry_delays_s": list(s.retry_delays_s),
+        "breaker_threshold": s.breaker_threshold,
+        "consecutive_failures": 0,
+        "next_send_at": None,
+        "next_llm_at": None,
+        "tz_hint": None,
     }
     try:
         rid = get_db().runs.insert_one(doc).inserted_id
@@ -92,18 +118,26 @@ def patch_run(run: dict, patch: dict) -> dict:
     if "recipient" in patch:
         rec = patch["recipient"]
         cols = set(run.get("columns") or [])
-        for c in [rec.get("email_column"), *(rec.get("human_name_columns") or []), *(rec.get("company_name_columns") or [])]:
+        for c in [
+            rec.get("email_column"),
+            *(rec.get("human_name_columns") or []),
+            *(rec.get("company_name_columns") or []),
+        ]:
             if c and cols and c not in cols:
                 raise Unprocessable(f"Unknown column: {c}", code="unknown_column")
-        upd["recipient"] = {"email_column": rec.get("email_column"),
-                            "human_name_columns": list(rec.get("human_name_columns") or []),
-                            "company_name_columns": list(rec.get("company_name_columns") or [])}
+        upd["recipient"] = {
+            "email_column": rec.get("email_column"),
+            "human_name_columns": list(rec.get("human_name_columns") or []),
+            "company_name_columns": list(rec.get("company_name_columns") or []),
+        }
     if "filters" in patch:
         cols = set(run.get("columns") or [])
         for f in patch["filters"]:
             if f.get("column") not in cols:
                 raise Unprocessable(f"Unknown filter column: {f.get('column')}", code="unknown_column")
-        upd["filters"] = [{"column": f["column"], "values": list(f.get("values") or [])} for f in patch["filters"]]
+        upd["filters"] = [
+            {"column": f["column"], "values": list(f.get("values") or [])} for f in patch["filters"]
+        ]
 
     if "mode" in patch:
         mode = patch["mode"]
@@ -114,7 +148,9 @@ def patch_run(run: dict, patch: dict) -> dict:
         elif status == "paused_llm" and run["mode"] == "llm" and mode == "rules":
             upd["mode"] = "rules"
         elif mode != run["mode"]:
-            raise Conflict("The mode can only be switched from llm to rules while paused_llm", code="mode_locked")
+            raise Conflict(
+                "The mode can only be switched from llm to rules while paused_llm", code="mode_locked"
+            )
 
     if "greeting" in patch:
         upd["greeting"] = {**DEFAULT_GREETING, **run.get("greeting", {}), **patch["greeting"]}
@@ -179,11 +215,15 @@ def unprepare(run: dict) -> dict:
     db = get_db()
     if run["status"] != "ready":
         raise Conflict("Only a ready run can be unprepared", code="bad_state")
-    if db.run_items.count_documents({"run_id": run["_id"], "status": {"$in": ["sent", "unknown", "sending"]}}):
+    if db.run_items.count_documents(
+        {"run_id": run["_id"], "status": {"$in": ["sent", "unknown", "sending"]}}
+    ):
         raise Conflict("Something was already sent; cannot unprepare", code="already_sent")
     db.run_items.delete_many({"run_id": run["_id"]})
-    db.runs.update_one({"_id": run["_id"]}, {"$set": {"status": "draft", "updated_at": clock.now(),
-                                                      "pause_reason": None, "pause_detail": None}})
+    db.runs.update_one(
+        {"_id": run["_id"]},
+        {"$set": {"status": "draft", "updated_at": clock.now(), "pause_reason": None, "pause_detail": None}},
+    )
     return db.runs.find_one({"_id": run["_id"]})
 
 
@@ -194,12 +234,26 @@ def start(run: dict) -> dict:
     if run.get("approval") == "manual":
         n = db.run_items.count_documents({"run_id": run["_id"], "status": "needs_review"})
         if n:
-            raise Conflict(f"Resolve {n} duplicate(s) (Resend or Skip) before starting a manual run",
-                           code="needs_review_unresolved", extra={"needs_review": n})
+            raise Conflict(
+                f"Resolve {n} duplicate(s) (Resend or Skip) before starting a manual run",
+                code="needs_review_unresolved",
+                extra={"needs_review": n},
+            )
     now = clock.now()
-    res = db.runs.update_one({"_id": run["_id"], "status": "ready"}, {"$set": {
-        "status": "running", "started_at": now, "consecutive_failures": 0, "next_send_at": None,
-        "pause_reason": None, "pause_detail": None, "updated_at": now}})
+    res = db.runs.update_one(
+        {"_id": run["_id"], "status": "ready"},
+        {
+            "$set": {
+                "status": "running",
+                "started_at": now,
+                "consecutive_failures": 0,
+                "next_send_at": None,
+                "pause_reason": None,
+                "pause_detail": None,
+                "updated_at": now,
+            }
+        },
+    )
     if not res.modified_count:
         raise Conflict("The run is no longer ready", code="bad_state")
     return db.runs.find_one({"_id": run["_id"]})
@@ -208,8 +262,10 @@ def start(run: dict) -> dict:
 def pause(run: dict) -> dict:
     if run["status"] != "running":
         raise Conflict("Only a running run can be paused", code="bad_state")
-    get_db().runs.update_one({"_id": run["_id"], "status": "running"},
-                             {"$set": {"status": "paused_user", "updated_at": clock.now()}})
+    get_db().runs.update_one(
+        {"_id": run["_id"], "status": "running"},
+        {"$set": {"status": "paused_user", "updated_at": clock.now()}},
+    )
     return get_db().runs.find_one({"_id": run["_id"]})
 
 
@@ -223,6 +279,7 @@ def resume(run: dict) -> dict:
         sender, detail = pick_sender(run.get("sender_ids") or [])
         if sender is None:
             from ..api.util import ser
+
             raise Conflict("No sender is available yet", code="no_sender_available", extra=ser(detail))
         new = {"status": "running"}
     elif st == "paused_llm":
@@ -230,6 +287,7 @@ def resume(run: dict) -> dict:
             key, detail = pick_key(run.get("llm_key_ids") or [])
             if key is None:
                 from ..api.util import ser
+
                 raise Conflict("No Gemini key is available yet", code="no_key_available", extra=ser(detail))
         new = {"status": "preparing", "next_llm_at": None}
     elif st == "paused_errors":
@@ -252,13 +310,30 @@ def delete_run(run: dict) -> None:
 
 
 def reopen_if_completed(run_id) -> None:
-    get_db().runs.update_one({"_id": run_id, "status": "completed"},
-                             {"$set": {"status": "running", "next_send_at": None, "updated_at": clock.now()}})
+    get_db().runs.update_one(
+        {"_id": run_id, "status": "completed"},
+        {"$set": {"status": "running", "next_send_at": None, "updated_at": clock.now()}},
+    )
 
 
 def counts(run_id) -> dict:
-    out = dict.fromkeys(("pending", "sending", "sent", "failed", "no_contact", "needs_review", "skipped_duplicate", "skipped_user", "unknown"), 0)
-    for r in get_db().run_items.aggregate([{"$match": {"run_id": run_id}}, {"$group": {"_id": "$status", "n": {"$sum": 1}}}]):
+    out = dict.fromkeys(
+        (
+            "pending",
+            "sending",
+            "sent",
+            "failed",
+            "no_contact",
+            "needs_review",
+            "skipped_duplicate",
+            "skipped_user",
+            "unknown",
+        ),
+        0,
+    )
+    for r in get_db().run_items.aggregate(
+        [{"$match": {"run_id": run_id}}, {"$group": {"_id": "$status", "n": {"$sum": 1}}}]
+    ):
         out[r["_id"]] = r["n"]
     out["total"] = sum(out.values())
     return out

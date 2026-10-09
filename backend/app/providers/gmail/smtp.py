@@ -66,8 +66,9 @@ class GmailProvider:
         s = get_settings()
         sec = s.gmail_smtp_security
         if sec == "ssl":
-            smtp = smtplib.SMTP_SSL(s.gmail_smtp_host, s.gmail_smtp_port, timeout=30,
-                                    context=ssl.create_default_context())
+            smtp = smtplib.SMTP_SSL(
+                s.gmail_smtp_host, s.gmail_smtp_port, timeout=30, context=ssl.create_default_context()
+            )
         else:
             smtp = smtplib.SMTP(s.gmail_smtp_host, s.gmail_smtp_port, timeout=30)
         smtp.ehlo()
@@ -121,6 +122,7 @@ class GmailProvider:
             return SendResult("sent", f"{code} {_text(resp)}", message_id=message_id)
         except Exception as e:
             from ...errors import AppError
+
             if isinstance(e, AppError):
                 return SendResult("permanent", e.detail, recipient_specific=True)
             return map_smtp_error(e, phase)

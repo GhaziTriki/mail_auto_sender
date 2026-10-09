@@ -1,10 +1,27 @@
 """Deterministic fake LLM (LLM_FAKE=1)."""
+
 from __future__ import annotations
 
 import re
 
-GENERIC = {"info", "contact", "hr", "rh", "jobs", "careers", "recrutement", "hello", "support", "admin", "office",
-           "team", "recruitment", "sales", "jobs-fr", "talent"}
+GENERIC = {
+    "info",
+    "contact",
+    "hr",
+    "rh",
+    "jobs",
+    "careers",
+    "recrutement",
+    "hello",
+    "support",
+    "admin",
+    "office",
+    "team",
+    "recruitment",
+    "sales",
+    "jobs-fr",
+    "talent",
+}
 FEMALE = {"sarah", "marie", "emma", "anna", "sophie", "laura", "julia", "sara", "fatma", "amel", "ines"}
 MALE = {"john", "paul", "david", "peter", "ahmed", "mohamed", "karim", "mehdi", "youssef", "jean"}
 
@@ -18,7 +35,9 @@ def fake_classify(batch: list[dict]) -> list[dict]:
     for it in batch:
         local, _, domain = it["email"].partition("@")
         local_l = local.lower()
-        personal = local_l not in GENERIC and bool(re.match(r"^[a-z]+([._-][a-z]+)+$|^[a-z]\.[a-z]+$", local_l))
+        personal = local_l not in GENERIC and bool(
+            re.match(r"^[a-z]+([._-][a-z]+)+$|^[a-z]\.[a-z]+$", local_l)
+        )
         company = None
         if it.get("company_names"):
             company = " ".join(it["company_names"]).strip() or None
@@ -31,5 +50,7 @@ def fake_classify(batch: list[dict]) -> list[dict]:
             hon = "Ms" if first in FEMALE else "Mr" if first in MALE else None
             out.append({"id": it["id"], "kind": "human", "name": name, "company": None, "honorific": hon})
         else:
-            out.append({"id": it["id"], "kind": "company", "name": None, "company": company, "honorific": None})
+            out.append(
+                {"id": it["id"], "kind": "company", "name": None, "company": company, "honorific": None}
+            )
     return out

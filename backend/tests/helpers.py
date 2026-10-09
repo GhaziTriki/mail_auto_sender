@@ -21,10 +21,26 @@ def add_sender(address="a@gmail.com", cap=100, status="active", provider="gmail"
     existing = get_db().senders.find_one({"user_id": "local", "provider": provider, "address": address})
     if existing:
         return existing["_id"]
-    return get_db().senders.insert_one({
-        "user_id": "local", "provider": provider, "address": address, "display_name": "Tester",
-        "secret_enc": encrypt("pw"), "daily_cap": cap, "status": status, "blocked_until": None, "last_error": None,
-        "deleted_at": None, "created_at": now, "updated_at": now}).inserted_id
+    return (
+        get_db()
+        .senders.insert_one(
+            {
+                "user_id": "local",
+                "provider": provider,
+                "address": address,
+                "display_name": "Tester",
+                "secret_enc": encrypt("pw"),
+                "daily_cap": cap,
+                "status": status,
+                "blocked_until": None,
+                "last_error": None,
+                "deleted_at": None,
+                "created_at": now,
+                "updated_at": now,
+            }
+        )
+        .inserted_id
+    )
 
 
 def api_run(client, name="r1", csv=CSV_BASIC, sender_ids=None, approval="auto", mode="rules", extra=None):
@@ -35,11 +51,17 @@ def api_run(client, name="r1", csv=CSV_BASIC, sender_ids=None, approval="auto", 
     assert r.status_code == 200, r.text
     r = client.post(f"/api/runs/{rid}/cv", files={"file": ("cv.pdf", PDF, "application/pdf")})
     assert r.status_code == 200, r.text
-    patch = {"recipient": {"email_column": "Email", "human_name_columns": ["First", "Last"],
-                           "company_name_columns": ["Company"]},
-             "mode": mode, "approval": approval,
-             "sender_ids": [str(s) for s in (sender_ids or [add_sender()])],
-             "template": {"subject": "Hello {{company}}", "body": "{{greeting}}\n\nCV attached. {{col:Country}}"}}
+    patch = {
+        "recipient": {
+            "email_column": "Email",
+            "human_name_columns": ["First", "Last"],
+            "company_name_columns": ["Company"],
+        },
+        "mode": mode,
+        "approval": approval,
+        "sender_ids": [str(s) for s in (sender_ids or [add_sender()])],
+        "template": {"subject": "Hello {{company}}", "body": "{{greeting}}\n\nCV attached. {{col:Country}}"},
+    }
     patch.update(extra or {})
     r = client.patch(f"/api/runs/{rid}", json=patch)
     assert r.status_code == 200, r.text

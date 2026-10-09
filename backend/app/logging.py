@@ -6,8 +6,19 @@ import re
 import sys
 from datetime import UTC, datetime
 
-_REDACT_KEYS = {"secret", "secret_enc", "app_password", "password", "api_key", "token", "access_token",
-                "refresh_token", "body", "authorization", "contentbytes"}
+_REDACT_KEYS = {
+    "secret",
+    "secret_enc",
+    "app_password",
+    "password",
+    "api_key",
+    "token",
+    "access_token",
+    "refresh_token",
+    "body",
+    "authorization",
+    "contentbytes",
+}
 _PATTERNS = [
     re.compile(r"(?i)(app[_ ]?password|api[_ ]?key|secret|token|password)(\s*[=:]\s*)\S+"),
     re.compile(r"AIza[0-9A-Za-z_\-]{20,}"),

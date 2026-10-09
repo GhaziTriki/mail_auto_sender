@@ -15,7 +15,9 @@ def build_message(email: OutgoingEmail) -> EmailMessage:
     if has_crlf(email.to, email.subject, email.from_name, email.from_address, email.reply_to):
         raise Unprocessable("Header fields must not contain line breaks", code="header_injection")
     msg = EmailMessage()
-    msg["From"] = formataddr((email.from_name or "", email.from_address)) if email.from_name else email.from_address
+    msg["From"] = (
+        formataddr((email.from_name or "", email.from_address)) if email.from_name else email.from_address
+    )
     msg["To"] = email.to
     msg["Reply-To"] = email.reply_to or email.from_address
     msg["Subject"] = email.subject
@@ -23,6 +25,7 @@ def build_message(email: OutgoingEmail) -> EmailMessage:
     domain = email.from_address.split("@", 1)[-1]
     msg["Message-ID"] = make_msgid(domain=domain)
     msg.set_content(email.body_text, subtype="plain", charset="utf-8")
-    msg.add_attachment(email.attachment_bytes, maintype="application", subtype="pdf",
-                       filename=email.attachment_name)
+    msg.add_attachment(
+        email.attachment_bytes, maintype="application", subtype="pdf", filename=email.attachment_name
+    )
     return msg

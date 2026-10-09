@@ -21,23 +21,32 @@ from tests.helpers import add_sender
 
 
 # 1 --------------------------------------------------------------------------------------------
-@pytest.mark.parametrize("cell,expected", [
-    ("Jane.Doe@Example.COM", "jane.doe@example.com"),
-    ("contact: bob+tag@x.org, other@y.org", "bob+tag@x.org"),
-    ("<a@b.com>.", "a@b.com"),
-    ("junk;;; not-an-email; @@; c@d.io;", "c@d.io"),
-    ("bad@@x.com ok@fine.com", "ok@fine.com"),
-    ("see me@site.com.", "me@site.com"),
-    ("", None), (None, None), ("no email here", None),
-])
+@pytest.mark.parametrize(
+    "cell,expected",
+    [
+        ("Jane.Doe@Example.COM", "jane.doe@example.com"),
+        ("contact: bob+tag@x.org, other@y.org", "bob+tag@x.org"),
+        ("<a@b.com>.", "a@b.com"),
+        ("junk;;; not-an-email; @@; c@d.io;", "c@d.io"),
+        ("bad@@x.com ok@fine.com", "ok@fine.com"),
+        ("see me@site.com.", "me@site.com"),
+        ("", None),
+        (None, None),
+        ("no email here", None),
+    ],
+)
 def test_email_extraction(cell, expected):
     assert extract_email(cell) == expected
 
 
 # 2 --------------------------------------------------------------------------------------------
 def test_filters_and_or_empty_and_accent_search():
-    rows = [{"_i": 0, "c": "TN", "s": "IT"}, {"_i": 1, "c": "FR", "s": "IT"}, {"_i": 2, "c": "TN", "s": ""},
-            {"_i": 3, "c": "TN", "s": "Finance"}]
+    rows = [
+        {"_i": 0, "c": "TN", "s": "IT"},
+        {"_i": 1, "c": "FR", "s": "IT"},
+        {"_i": 2, "c": "TN", "s": ""},
+        {"_i": 3, "c": "TN", "s": "Finance"},
+    ]
     f = [{"column": "c", "values": ["TN"]}, {"column": "s", "values": ["IT", flt.EMPTY]}]
     assert [r["_i"] for r in rows if flt.row_matches(r, f)] == [0, 2]
     assert flt.row_matches(rows[1], [{"column": "c", "values": []}])  # no values selected = ignored
@@ -76,7 +85,11 @@ def test_importer_xlsx_sheets_and_limits(settings):
     wb.save(buf)
     raw = buf.getvalue()
     p = importer.parse_source(raw, "xlsx")
-    assert p["sheet"] == "First" and p["rows"][0] == {"Email": "a@b.com", "N": "5"} and p["sheets"] == ["First", "Second"]
+    assert (
+        p["sheet"] == "First"
+        and p["rows"][0] == {"Email": "a@b.com", "N": "5"}
+        and p["sheets"] == ["First", "Second"]
+    )
     assert importer.parse_source(raw, "xlsx", sheet="Second")["columns"] == ["Mail"]
     settings.max_rows = 2
     with pytest.raises(Unprocessable):
@@ -92,10 +105,13 @@ def test_importer_xlsx_sheets_and_limits(settings):
 
 
 # 4 --------------------------------------------------------------------------------------------
-GREETING = {"salutation": "Dear", "use_honorific": True,
-            "company_template": "{salutation} {company} team,",
-            "human_template": "{salutation} {honorific} {name},",
-            "fallback_template": "{salutation} Hiring Team,"}
+GREETING = {
+    "salutation": "Dear",
+    "use_honorific": True,
+    "company_template": "{salutation} {company} team,",
+    "human_template": "{salutation} {honorific} {name},",
+    "fallback_template": "{salutation} Hiring Team,",
+}
 
 
 def test_greetings():
@@ -105,7 +121,10 @@ def test_greetings():
     assert build_greeting({**GREETING, "use_honorific": False}, "human", "Jane", None, "Ms") == "Dear Jane,"
     assert build_greeting(GREETING, "company", None, None, None) == "Dear Hiring Team,"
     assert build_greeting(GREETING, "human", None, "Acme", None) == "Dear Hiring Team,"
-    assert build_greeting({**GREETING, "salutation": "Hello"}, "company", None, "Acme", None) == "Hello Acme team,"
+    assert (
+        build_greeting({**GREETING, "salutation": "Hello"}, "company", None, "Acme", None)
+        == "Hello Acme team,"
+    )
 
 
 def test_template_validation_and_render():
@@ -114,9 +133,18 @@ def test_template_validation_and_render():
     assert validate_template({"subject": "S {{nope}}", "body": "x"}, cols)
     assert validate_template({"subject": "S", "body": "{{col:Missing}}"}, cols)
     assert validate_template({"subject": "", "body": "x"}, cols)
-    run = {"greeting": GREETING, "template": {"subject": "Hi {{company}}", "body": "{{greeting}}|{{col:Country}}|{{email}}"}}
-    item = {"kind": "company", "company": "Acme", "name": None, "honorific": None, "email_norm": "a@b.com",
-            "row": {"Country": ""}}
+    run = {
+        "greeting": GREETING,
+        "template": {"subject": "Hi {{company}}", "body": "{{greeting}}|{{col:Country}}|{{email}}"},
+    }
+    item = {
+        "kind": "company",
+        "company": "Acme",
+        "name": None,
+        "honorific": None,
+        "email_norm": "a@b.com",
+        "row": {"Country": ""},
+    }
     r = render_item(run, item)
     assert r["subject"] == "Hi Acme" and r["body"] == "Dear Acme team,||a@b.com"
     assert "empty:Country" in r["render_warnings"]
@@ -159,15 +187,31 @@ def test_quota_blocked_until_and_resets_max(db, frozen):
 def test_smtp_mapping():
     auth = smtplib.SMTPAuthenticationError(535, b"5.7.8 bad")
     assert map_smtp_error(auth, "auth").outcome == "auth"
-    assert map_smtp_error(smtplib.SMTPAuthenticationError(534, b"5.7.9 Application-specific password required"), "auth").outcome == "auth"
+    assert (
+        map_smtp_error(
+            smtplib.SMTPAuthenticationError(534, b"5.7.9 Application-specific password required"), "auth"
+        ).outcome
+        == "auth"
+    )
     r = map_smtp_error(smtplib.SMTPResponseException(550, b"5.1.1 no such user"), "rcpt")
     assert r.outcome == "permanent" and r.recipient_specific
     assert map_smtp_error(smtplib.SMTPResponseException(553, b"bad"), "rcpt").recipient_specific
     r = map_smtp_error(smtplib.SMTPResponseException(554, b"5.7.1 blocked"), "data")
     assert r.outcome == "permanent" and not r.recipient_specific
-    assert map_smtp_error(smtplib.SMTPResponseException(550, b"5.4.5 Daily user sending quota exceeded"), "data").outcome == "quota"
-    assert map_smtp_error(smtplib.SMTPResponseException(452, b"Daily user sending limit"), "rcpt").outcome == "quota"
-    assert map_smtp_error(smtplib.SMTPResponseException(550, b"You hit the sending limit"), "data").outcome == "quota"
+    assert (
+        map_smtp_error(
+            smtplib.SMTPResponseException(550, b"5.4.5 Daily user sending quota exceeded"), "data"
+        ).outcome
+        == "quota"
+    )
+    assert (
+        map_smtp_error(smtplib.SMTPResponseException(452, b"Daily user sending limit"), "rcpt").outcome
+        == "quota"
+    )
+    assert (
+        map_smtp_error(smtplib.SMTPResponseException(550, b"You hit the sending limit"), "data").outcome
+        == "quota"
+    )
     assert map_smtp_error(smtplib.SMTPResponseException(421, b"try later"), "connect").outcome == "transient"
     assert map_smtp_error(smtplib.SMTPResponseException(451, b"temp"), "data").outcome == "transient"
     # phase logic for disconnects

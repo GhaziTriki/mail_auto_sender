@@ -71,6 +71,7 @@ def list_senders(provider: str | None = None):
 
 def _norm_address(address: str) -> str:
     from email_validator import EmailNotValidError, validate_email
+
     try:
         return validate_email(address.strip(), check_deliverability=False).normalized.lower()
     except EmailNotValidError as e:
@@ -88,14 +89,26 @@ def add_gmail(body: GmailIn):
     if existing and not existing.get("deleted_at"):
         raise Conflict("This Gmail account already exists. Edit it instead.", code="sender_exists")
     fields = {
-        "display_name": body.display_name, "secret_enc": encrypt(pw), "daily_cap": cap, "status": "active",
-        "blocked_until": None, "last_error": None, "deleted_at": None, "updated_at": now,
+        "display_name": body.display_name,
+        "secret_enc": encrypt(pw),
+        "daily_cap": cap,
+        "status": "active",
+        "blocked_until": None,
+        "last_error": None,
+        "deleted_at": None,
+        "updated_at": now,
     }
     if existing:  # undelete and replace the secret
         db.senders.update_one({"_id": existing["_id"]}, {"$set": fields})
         sid = existing["_id"]
     else:
-        doc = {"user_id": current_user_id(), "provider": "gmail", "address": address, "created_at": now, **fields}
+        doc = {
+            "user_id": current_user_id(),
+            "provider": "gmail",
+            "address": address,
+            "created_at": now,
+            **fields,
+        }
         sid = db.senders.insert_one(doc).inserted_id
     return sender_view(db.senders.find_one({"_id": sid}))
 
@@ -103,7 +116,9 @@ def add_gmail(body: GmailIn):
 @router.post("")
 def add_sender(body: dict):
     if body.get("provider", "gmail") != "gmail":
-        raise Unprocessable("Outlook accounts are connected through OAuth (/api/oauth/outlook/start)", code="use_oauth")
+        raise Unprocessable(
+            "Outlook accounts are connected through OAuth (/api/oauth/outlook/start)", code="use_oauth"
+        )
     return add_gmail(GmailIn(**{k: v for k, v in body.items() if k != "provider"}))
 
 
@@ -144,11 +159,17 @@ def check_sender(sid: str):
         if res.auth_failed:
             upd["status"] = "auth_failed"
     get_db().senders.update_one({"_id": s["_id"]}, {"$set": upd})
-    return {"ok": res.ok, "detail": res.detail, "sender": sender_view(get_db().senders.find_one({"_id": s["_id"]}))}
+    return {
+        "ok": res.ok,
+        "detail": res.detail,
+        "sender": sender_view(get_db().senders.find_one({"_id": s["_id"]})),
+    }
 
 
 @router.delete("/{sid}")
 def delete_sender(sid: str):
     s = _get_sender(sid)
-    get_db().senders.update_one({"_id": s["_id"]}, {"$set": {"deleted_at": clock.now(), "updated_at": clock.now()}})
+    get_db().senders.update_one(
+        {"_id": s["_id"]}, {"$set": {"deleted_at": clock.now(), "updated_at": clock.now()}}
+    )
     return {"ok": True}

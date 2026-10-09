@@ -1,4 +1,5 @@
 """Rules-mode classification (spec 8.5)."""
+
 from __future__ import annotations
 
 import re
@@ -48,5 +49,11 @@ def classify_rules(rule_kind: str, recipient: dict, row: dict, email: str) -> di
                 warnings.append("company_from_domain")
     else:
         company = _first_nonempty(row, recipient.get("company_name_columns") or []) or None
-    return {"kind": kind, "name": name, "company": company or None, "honorific": None, "decided_by": "rules",
-            "warnings": warnings}
+    return {
+        "kind": kind,
+        "name": name,
+        "company": company or None,
+        "honorific": None,
+        "decided_by": "rules",
+        "warnings": warnings,
+    }

@@ -1,4 +1,5 @@
 """Derived sender quota (spec 5.1). Never stored: always computed from send_log."""
+
 from __future__ import annotations
 
 from datetime import datetime, timedelta
@@ -18,7 +19,8 @@ def sender_quota(sender: dict, now: datetime | None = None) -> dict:
     db = get_db()
     since = now - WINDOW
     ats = sorted(
-        _aware(d["at"]) for d in db.send_log.find({"sender_id": sender["_id"], "at": {"$gte": since}}, {"at": 1})
+        _aware(d["at"])
+        for d in db.send_log.find({"sender_id": sender["_id"], "at": {"$gte": since}}, {"at": 1})
     )
     used = len(ats)
     cap = int(sender.get("daily_cap") or 0)
@@ -90,7 +92,10 @@ def pick_sender(sender_ids: list) -> tuple[dict | None, dict]:
         if r is None:
             return s, {}
         reasons.append({"id": str(sid), "address": s.get("address"), "reason": r})
-        if (r in ("cap", "blocked") and q["resets_at"] is not None
-                and (earliest is None or q["resets_at"] < earliest)):
+        if (
+            r in ("cap", "blocked")
+            and q["resets_at"] is not None
+            and (earliest is None or q["resets_at"] < earliest)
+        ):
             earliest = q["resets_at"]
     return None, {"earliest_reset_at": earliest, "senders": reasons}

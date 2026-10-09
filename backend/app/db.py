@@ -34,7 +34,9 @@ def set_db(db) -> None:
 
 def ensure_indexes(db: Database | None = None) -> None:
     db = db if db is not None else get_db()
-    db.senders.create_index([("user_id", ASCENDING), ("provider", ASCENDING), ("address", ASCENDING)], unique=True)
+    db.senders.create_index(
+        [("user_id", ASCENDING), ("provider", ASCENDING), ("address", ASCENDING)], unique=True
+    )
     db.send_log.create_index([("sender_id", ASCENDING), ("at", ASCENDING)])
     db.send_log.create_index("at", expireAfterSeconds=3 * 24 * 3600)
     db.llm_keys.create_index([("user_id", ASCENDING)])

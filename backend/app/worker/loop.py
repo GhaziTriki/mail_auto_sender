@@ -1,4 +1,5 @@
 """Worker loop (spec 9.5)."""
+
 from __future__ import annotations
 
 import time
@@ -25,7 +26,9 @@ def tick() -> dict:
         except Exception:
             log.exception("classification unit failed", extra={"run_id": run["_id"]})
     now = clock.now()
-    for run in list(db.runs.find({"status": "running", "$or": [{"next_send_at": None}, {"next_send_at": {"$lte": now}}]})):
+    for run in list(
+        db.runs.find({"status": "running", "$or": [{"next_send_at": None}, {"next_send_at": {"$lte": now}}]})
+    ):
         try:
             send_unit(run)
             stats["send_units"] += 1

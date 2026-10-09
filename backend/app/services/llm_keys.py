@@ -1,4 +1,5 @@
 """Gemini key pool state (spec 5.3, 8.6). Fill-first, lazy daily reset at midnight Pacific."""
+
 from __future__ import annotations
 
 from datetime import datetime, timedelta
@@ -49,8 +50,15 @@ def key_quota(key: dict) -> dict:
         state = "exhausted"
     else:
         state = "active"
-    return {"used": used, "cap": cap, "exhausted": exhausted, "cap_reached": cap_reached, "blocked": blocked,
-            "resets_at": next_midnight_pt(), "state": state}
+    return {
+        "used": used,
+        "cap": cap,
+        "exhausted": exhausted,
+        "cap_reached": cap_reached,
+        "blocked": blocked,
+        "resets_at": next_midnight_pt(),
+        "state": state,
+    }
 
 
 def unavailable_reason(key: dict) -> str | None:
@@ -93,10 +101,20 @@ def record_request(key_id) -> None:
 
 
 def mark_quota(key_id, detail: str) -> None:
-    get_db().llm_keys.update_one({"_id": key_id}, {"$set": {
-        "blocked_until": next_midnight_pt(), "last_error": detail[:300], "updated_at": clock.now()}})
+    get_db().llm_keys.update_one(
+        {"_id": key_id},
+        {
+            "$set": {
+                "blocked_until": next_midnight_pt(),
+                "last_error": detail[:300],
+                "updated_at": clock.now(),
+            }
+        },
+    )
 
 
 def mark_auth_failed(key_id, detail: str) -> None:
-    get_db().llm_keys.update_one({"_id": key_id}, {"$set": {
-        "status": "auth_failed", "last_error": detail[:300], "updated_at": clock.now()}})
+    get_db().llm_keys.update_one(
+        {"_id": key_id},
+        {"$set": {"status": "auth_failed", "last_error": detail[:300], "updated_at": clock.now()}},
+    )

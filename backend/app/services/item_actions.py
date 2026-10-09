@@ -1,4 +1,5 @@
 """Item actions (spec 9.8)."""
+
 from __future__ import annotations
 
 from .. import clock
@@ -17,6 +18,7 @@ def _select(run: dict, item_ids, status_filter) -> list[dict]:
     q: dict = {"run_id": run["_id"]}
     if item_ids:
         from ..api.util import oid
+
         q["_id"] = {"$in": [oid(i) for i in item_ids]}
     elif status_filter:
         q["status"] = status_filter
@@ -37,7 +39,9 @@ def bulk_action(run: dict, action: str, item_ids=None, status_filter=None) -> di
         st = it["status"]
         if action == "approve":
             if run.get("approval") == "manual" and st == "pending":
-                db.run_items.update_one({"_id": it["_id"], "status": "pending"}, {"$set": {"approved": True, "updated_at": now}})
+                db.run_items.update_one(
+                    {"_id": it["_id"], "status": "pending"}, {"$set": {"approved": True, "updated_at": now}}
+                )
                 changed += 1
                 created_pending = True
         elif action == "skip":
@@ -47,20 +51,44 @@ def bulk_action(run: dict, action: str, item_ids=None, status_filter=None) -> di
                 new = "skipped_duplicate"
             else:
                 continue
-            res = db.run_items.update_one({"_id": it["_id"], "status": st}, {"$set": {"status": new, "updated_at": now}})
+            res = db.run_items.update_one(
+                {"_id": it["_id"], "status": st}, {"$set": {"status": new, "updated_at": now}}
+            )
             changed += res.modified_count
         elif action == "rerun":
             if st == "failed":
-                res = db.run_items.update_one({"_id": it["_id"], "status": "failed"}, {"$set": {
-                    "status": "pending", "attempt_count": 0, "next_attempt_at": None, "updated_at": now,
-                    "approved": True if run.get("approval") == "manual" else it.get("approved", False)}})
+                res = db.run_items.update_one(
+                    {"_id": it["_id"], "status": "failed"},
+                    {
+                        "$set": {
+                            "status": "pending",
+                            "attempt_count": 0,
+                            "next_attempt_at": None,
+                            "updated_at": now,
+                            "approved": True
+                            if run.get("approval") == "manual"
+                            else it.get("approved", False),
+                        }
+                    },
+                )
             elif st == "unknown":
                 if it.get("contact_id") is not None:
                     locking.release(it["contact_id"], it["_id"])
                     get_db().contacts.update_one({"_id": it["contact_id"]}, {"$set": {"sent_info": None}})
-                res = db.run_items.update_one({"_id": it["_id"], "status": "unknown"}, {"$set": {
-                    "status": "pending", "attempt_count": 0, "next_attempt_at": None, "updated_at": now,
-                    "approved": True if run.get("approval") == "manual" else it.get("approved", False)}})
+                res = db.run_items.update_one(
+                    {"_id": it["_id"], "status": "unknown"},
+                    {
+                        "$set": {
+                            "status": "pending",
+                            "attempt_count": 0,
+                            "next_attempt_at": None,
+                            "updated_at": now,
+                            "approved": True
+                            if run.get("approval") == "manual"
+                            else it.get("approved", False),
+                        }
+                    },
+                )
             else:
                 continue
             if res.modified_count:
@@ -68,21 +96,43 @@ def bulk_action(run: dict, action: str, item_ids=None, status_filter=None) -> di
                 created_pending = True
         elif action == "resend":
             if st == "needs_review":
-                res = db.run_items.update_one({"_id": it["_id"], "status": "needs_review"}, {"$set": {
-                    "status": "pending", "override_duplicate": True, "updated_at": now,
-                    "approved": True if run.get("approval") == "manual" else it.get("approved", False)}})
+                res = db.run_items.update_one(
+                    {"_id": it["_id"], "status": "needs_review"},
+                    {
+                        "$set": {
+                            "status": "pending",
+                            "override_duplicate": True,
+                            "updated_at": now,
+                            "approved": True
+                            if run.get("approval") == "manual"
+                            else it.get("approved", False),
+                        }
+                    },
+                )
                 if res.modified_count:
                     changed += 1
                     created_pending = True
         elif action == "mark_sent" and st == "unknown":
-            res = db.run_items.update_one({"_id": it["_id"], "status": "unknown"}, {"$set": {
-                "status": "sent", "sent_at": it.get("attempted_at") or now, "updated_at": now}})
+            res = db.run_items.update_one(
+                {"_id": it["_id"], "status": "unknown"},
+                {"$set": {"status": "sent", "sent_at": it.get("attempted_at") or now, "updated_at": now}},
+            )
             if res.modified_count and it.get("contact_id") is not None:
-                db.contacts.update_one({"_id": it["contact_id"]}, {"$set": {
-                    "sent_info": {"run_id": run["_id"], "run_name": run.get("name"),
-                                  "sender_address": it.get("sender_address"),
-                                  "sent_at": it.get("attempted_at") or now, "subject": it.get("subject"),
-                                  "uncertain": False}}})
+                db.contacts.update_one(
+                    {"_id": it["contact_id"]},
+                    {
+                        "$set": {
+                            "sent_info": {
+                                "run_id": run["_id"],
+                                "run_name": run.get("name"),
+                                "sender_address": it.get("sender_address"),
+                                "sent_at": it.get("attempted_at") or now,
+                                "subject": it.get("subject"),
+                                "uncertain": False,
+                            }
+                        }
+                    },
+                )
             changed += res.modified_count
     if created_pending:
         reopen_if_completed(run["_id"])
@@ -116,8 +166,14 @@ def edit_item(item: dict, patch: dict) -> dict:
         merged = {**item, **upd}
         if not any(k in patch for k in ("subject", "body", "greeting_text")):
             r = render_item(run, merged)
-            upd.update({"greeting_text": r["greeting_text"], "subject": r["subject"], "body": r["body"],
-                        "warnings": merged_warnings(merged, r["render_warnings"])})
+            upd.update(
+                {
+                    "greeting_text": r["greeting_text"],
+                    "subject": r["subject"],
+                    "body": r["body"],
+                    "warnings": merged_warnings(merged, r["render_warnings"]),
+                }
+            )
     upd["updated_at"] = clock.now()
     db.run_items.update_one({"_id": item["_id"], "status": {"$in": list(EDITABLE_STATUSES)}}, {"$set": upd})
     return db.run_items.find_one({"_id": item["_id"]})

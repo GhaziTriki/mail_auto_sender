@@ -28,19 +28,31 @@ def summary(from_: str | None = Query(None, alias="from"), to: str | None = None
     runs = list(db.runs.find({"user_id": current_user_id(), "created_at": {"$gte": dt_from, "$lte": dt_to}}))
     run_ids = [r["_id"] for r in runs]
     counts = {"sent": 0, "failed": 0, "needs_review": 0, "no_contact": 0, "unknown": 0}
-    for g in db.run_items.aggregate([{"$match": {"run_id": {"$in": run_ids}}}, {"$group": {"_id": "$status", "n": {"$sum": 1}}}]):
+    for g in db.run_items.aggregate(
+        [{"$match": {"run_id": {"$in": run_ids}}}, {"$group": {"_id": "$status", "n": {"$sum": 1}}}]
+    ):
         if g["_id"] in counts:
             counts[g["_id"]] = g["n"]
     per_day: dict[str, int] = {}
-    for it in db.run_items.find({"run_id": {"$in": run_ids}, "status": "sent", "sent_at": {"$ne": None}}, {"sent_at": 1}):
+    for it in db.run_items.find(
+        {"run_id": {"$in": run_ids}, "status": "sent", "sent_at": {"$ne": None}}, {"sent_at": 1}
+    ):
         d = clock.as_utc(it["sent_at"]).astimezone(zone).strftime("%Y-%m-%d")
         per_day[d] = per_day.get(d, 0) + 1
     senders = []
     for s in db.senders.find({"user_id": current_user_id(), "deleted_at": None}).sort("created_at", 1):
-        senders.append({"id": str(s["_id"]), "provider": s["provider"], "address": s["address"],
-                        "status": s.get("status"), "quota": ser(sender_quota(s))})
+        senders.append(
+            {
+                "id": str(s["_id"]),
+                "provider": s["provider"],
+                "address": s["address"],
+                "status": s.get("status"),
+                "quota": ser(sender_quota(s)),
+            }
+        )
     return {
-        "from": dt_from.isoformat(), "to": dt_to.isoformat(),
+        "from": dt_from.isoformat(),
+        "to": dt_to.isoformat(),
         "kpis": {"runs": len(runs), **counts},
         "sent_per_day": [{"date": d, "sent": n} for d, n in sorted(per_day.items())],
         "senders": senders,

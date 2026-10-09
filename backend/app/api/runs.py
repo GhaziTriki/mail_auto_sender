@@ -64,8 +64,14 @@ class RunPatch(BaseModel):
 
 
 @router.get("")
-def list_runs(from_: str | None = Query(None, alias="from"), to: str | None = None, status: str | None = None,
-              q: str | None = None, page: int = 1, page_size: int = 50):
+def list_runs(
+    from_: str | None = Query(None, alias="from"),
+    to: str | None = None,
+    status: str | None = None,
+    q: str | None = None,
+    page: int = 1,
+    page_size: int = 50,
+):
     return _list_runs(from_, to, status, q, page, page_size)
 
 
@@ -138,6 +144,7 @@ def delete_run(run_id: str):
 
 # ---- files --------------------------------------------------------------------------------------
 
+
 def _ensure_editable(run: dict) -> None:
     if run.get("first_send_at") is not None:
         raise ConfigLocked("Files are locked after the first email was sent")
@@ -161,8 +168,13 @@ async def upload_source(run_id: str, file: UploadFile = File(...)):
     raw = await file.read()
     updates = importer.save_source(run["_id"], file.filename or "contacts.csv", raw)
     set_ = {k: v for k, v in updates.items() if k != "_preview"}
-    set_.update({"filters": [], "recipient": {"email_column": None, "human_name_columns": [], "company_name_columns": []},
-                 "updated_at": clock.now()})
+    set_.update(
+        {
+            "filters": [],
+            "recipient": {"email_column": None, "human_name_columns": [], "company_name_columns": []},
+            "updated_at": clock.now(),
+        }
+    )
     get_db().runs.update_one({"_id": run["_id"]}, {"$set": set_})
     return _source_response(run["_id"], updates)
 
@@ -181,8 +193,14 @@ def source_options(run_id: str, body: SourceOptions):
     if not sf:
         raise Unprocessable("Upload a contacts file first", code="no_source")
     raw = Path(sf["path"]).read_bytes()
-    updates = importer.save_source(run["_id"], sf["original_name"], raw, encoding=body.encoding,
-                                   delimiter=body.delimiter, sheet=body.sheet)
+    updates = importer.save_source(
+        run["_id"],
+        sf["original_name"],
+        raw,
+        encoding=body.encoding,
+        delimiter=body.delimiter,
+        sheet=body.sheet,
+    )
     set_ = {k: v for k, v in updates.items() if k != "_preview"}
     set_["updated_at"] = clock.now()
     get_db().runs.update_one({"_id": run["_id"]}, {"$set": set_})
@@ -213,6 +231,7 @@ def download_file(run_id: str, which: str):
 
 # ---- filters ------------------------------------------------------------------------------------
 
+
 @router.get("/{run_id}/columns/{col}/values")
 def column_values(run_id: str, col: str, q: str | None = None, limit: int = 50, offset: int = 0):
     run = _run(run_id)
@@ -238,6 +257,7 @@ def filters_preview(run_id: str, body: FilterPreview):
 
 
 # ---- lifecycle ----------------------------------------------------------------------------------
+
 
 @router.post("/{run_id}/prepare")
 def prepare(run_id: str):
@@ -267,6 +287,7 @@ def resume(run_id: str):
 @router.post("/{run_id}/rerender")
 def rerender(run_id: str):
     from ..services.prepare import rerender_run
+
     run = _run(run_id)
     return {"rerendered": rerender_run(run["_id"])}
 
@@ -282,8 +303,9 @@ def test_send(run_id: str, body: TestSend | None = None):
     if body and body.item_id:
         item = db.run_items.find_one({"_id": oid(body.item_id), "run_id": run["_id"]})
     else:
-        item = db.run_items.find_one({"run_id": run["_id"], "status": "pending", "classified": True},
-                                     sort=[("row_index", 1)])
+        item = db.run_items.find_one(
+            {"run_id": run["_id"], "status": "pending", "classified": True}, sort=[("row_index", 1)]
+        )
     if not item:
         raise Unprocessable("There is no prepared email to test with", code="no_item")
     sender, detail = pick_sender(run.get("sender_ids") or [])
@@ -291,31 +313,49 @@ def test_send(run_id: str, body: TestSend | None = None):
         raise Conflict("No sender is available", code="no_sender_available", extra=ser(detail))
     email = build_outgoing(run, sender, item, to=sender["address"], subject_prefix="[TEST] ")
     res = get_provider(sender["provider"]).send(sender, email)  # no item/contact/send_log changes
-    return {"ok": res.outcome == "sent", "outcome": res.outcome, "detail": res.detail, "to": sender["address"]}
+    return {
+        "ok": res.outcome == "sent",
+        "outcome": res.outcome,
+        "detail": res.detail,
+        "to": sender["address"],
+    }
 
 
 # ---- manual window / items ----------------------------------------------------------------------
+
 
 @router.get("/{run_id}/next")
 def next_item(run_id: str):
     run = _run(run_id)
     db = get_db()
-    item = db.run_items.find_one({"run_id": run["_id"], "status": "pending", "classified": True},
-                                 sort=[("row_index", 1)])
+    item = db.run_items.find_one(
+        {"run_id": run["_id"], "status": "pending", "classified": True}, sort=[("row_index", 1)]
+    )
     sender, detail = pick_sender(run.get("sender_ids") or [])
     sender_info = None
     if sender:
-        sender_info = {"id": str(sender["_id"]), "address": sender["address"], "provider": sender["provider"],
-                       "quota": ser(sender_quota(sender))}
+        sender_info = {
+            "id": str(sender["_id"]),
+            "address": sender["address"],
+            "provider": sender["provider"],
+            "quota": ser(sender_quota(sender)),
+        }
     remaining = db.run_items.count_documents({"run_id": run["_id"], "status": "pending"})
-    return {"item": item_view(item) if item else None, "sender": sender_info, "remaining_pending": remaining,
-            "sender_problem": ser(detail) if sender is None else None}
+    return {
+        "item": item_view(item) if item else None,
+        "sender": sender_info,
+        "remaining_pending": remaining,
+        "sender_problem": ser(detail) if sender is None else None,
+    }
 
 
 def item_view(item: dict) -> dict:
     out = ser(item)
-    out["contact_line"] = {"column": item.get("email_source_column"), "raw": item.get("email_raw"),
-                           "email": item.get("email_norm")}
+    out["contact_line"] = {
+        "column": item.get("email_source_column"),
+        "raw": item.get("email_raw"),
+        "email": item.get("email_norm"),
+    }
     if item.get("contact_id") is not None and item["status"] in ("needs_review", "skipped_duplicate"):
         c = get_db().contacts.find_one({"_id": item["contact_id"]})
         out["prior_send"] = ser((c or {}).get("sent_info"))
@@ -323,8 +363,14 @@ def item_view(item: dict) -> dict:
 
 
 @router.get("/{run_id}/items")
-def list_items(run_id: str, status: str | None = None, q: str | None = None, page: int = 1, page_size: int = 50,
-               sort: str = "row_index"):
+def list_items(
+    run_id: str,
+    status: str | None = None,
+    q: str | None = None,
+    page: int = 1,
+    page_size: int = 50,
+    sort: str = "row_index",
+):
     run = _run(run_id)
     query: dict = {"run_id": run["_id"]}
     if status:
@@ -332,9 +378,14 @@ def list_items(run_id: str, status: str | None = None, q: str | None = None, pag
     if q:
         rx = {"$regex": re.escape(q), "$options": "i"}
         query["$or"] = [{"email_norm": rx}, {"name": rx}, {"company": rx}, {"subject": rx}]
-    sort_field = {"row_index": ("row_index", 1), "-row_index": ("row_index", -1), "sent_at": ("sent_at", 1),
-                  "-sent_at": ("sent_at", -1), "updated_at": ("updated_at", 1), "-updated_at": ("updated_at", -1)}.get(
-        sort, ("row_index", 1))
+    sort_field = {
+        "row_index": ("row_index", 1),
+        "-row_index": ("row_index", -1),
+        "sent_at": ("sent_at", 1),
+        "-sent_at": ("sent_at", -1),
+        "updated_at": ("updated_at", 1),
+        "-updated_at": ("updated_at", -1),
+    }.get(sort, ("row_index", 1))
     db = get_db()
     total = db.run_items.count_documents(query)
     page = max(1, page)
@@ -367,8 +418,20 @@ def approve_all(run_id: str):
 @router.get("/{run_id}/export.csv")
 def export_csv(run_id: str):
     run = _run(run_id)
-    cols = ["row_index", "status", "email", "kind", "name", "company", "decided_by", "subject", "sender", "sent_at",
-            "last_error", "warnings"]
+    cols = [
+        "row_index",
+        "status",
+        "email",
+        "kind",
+        "name",
+        "company",
+        "decided_by",
+        "subject",
+        "sender",
+        "sent_at",
+        "last_error",
+        "warnings",
+    ]
     buf = io.StringIO()
     w = csv.writer(buf)
     w.writerow(cols)
@@ -378,11 +441,26 @@ def export_csv(run_id: str):
             last = it["attempts"][-1]
             if last.get("outcome") not in ("sent",):
                 last_err = last.get("detail") or ""
-        w.writerow([it["row_index"], it["status"], it.get("email_norm") or "", it.get("kind") or "",
-                    it.get("name") or "", it.get("company") or "", it.get("decided_by") or "", it.get("subject") or "",
-                    it.get("sender_address") or "", it["sent_at"].isoformat() if it.get("sent_at") else "", last_err,
-                    ";".join(it.get("warnings") or [])])
+        w.writerow(
+            [
+                it["row_index"],
+                it["status"],
+                it.get("email_norm") or "",
+                it.get("kind") or "",
+                it.get("name") or "",
+                it.get("company") or "",
+                it.get("decided_by") or "",
+                it.get("subject") or "",
+                it.get("sender_address") or "",
+                it["sent_at"].isoformat() if it.get("sent_at") else "",
+                last_err,
+                ";".join(it.get("warnings") or []),
+            ]
+        )
     buf.seek(0)
     safe = re.sub(r"[^A-Za-z0-9_.-]+", "_", run["name"])[:60] or "run"
-    return StreamingResponse(iter([buf.getvalue()]), media_type="text/csv",
-                             headers={"Content-Disposition": f'attachment; filename="{safe}.csv"'})
+    return StreamingResponse(
+        iter([buf.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": f'attachment; filename="{safe}.csv"'},
+    )

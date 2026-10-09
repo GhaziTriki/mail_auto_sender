@@ -1,4 +1,5 @@
 """Contacts file import (spec 8.1)."""
+
 from __future__ import annotations
 
 import csv
@@ -33,6 +34,7 @@ def detect_encoding(raw: bytes) -> str:
         pass
     try:
         from charset_normalizer import from_bytes
+
         best = from_bytes(raw).best()
         if best is not None and best.encoding and best.encoding.lower() not in ("ascii",):
             enc = best.encoding.lower()
@@ -78,7 +80,9 @@ def normalize_headers(headers: list[str]) -> list[str]:
     return out
 
 
-def _parse_csv(raw: bytes, encoding: str | None, delimiter: str | None) -> tuple[list[str], list[list[str]], str, str]:
+def _parse_csv(
+    raw: bytes, encoding: str | None, delimiter: str | None
+) -> tuple[list[str], list[list[str]], str, str]:
     enc = encoding or detect_encoding(raw)
     try:
         text = raw.decode(enc)
@@ -94,6 +98,7 @@ def _parse_csv(raw: bytes, encoding: str | None, delimiter: str | None) -> tuple
 
 def sheet_names(raw: bytes) -> list[str]:
     from openpyxl import load_workbook
+
     wb = load_workbook(io.BytesIO(raw), read_only=True, data_only=True)
     try:
         return list(wb.sheetnames)
@@ -111,6 +116,7 @@ def _cell_str(v) -> str:
 
 def _parse_xlsx(raw: bytes, sheet: str | None) -> tuple[list[str], list[list[str]], str | None, list[str]]:
     from openpyxl import load_workbook
+
     try:
         wb = load_workbook(io.BytesIO(raw), read_only=True, data_only=True)
     except Exception as e:
@@ -129,8 +135,14 @@ def _parse_xlsx(raw: bytes, sheet: str | None) -> tuple[list[str], list[list[str
     return rows[0], rows[1:], chosen, names
 
 
-def parse_source(raw: bytes, fmt: str, *, encoding: str | None = None, delimiter: str | None = None,
-                 sheet: str | None = None) -> dict:
+def parse_source(
+    raw: bytes,
+    fmt: str,
+    *,
+    encoding: str | None = None,
+    delimiter: str | None = None,
+    sheet: str | None = None,
+) -> dict:
     """Parse and normalise. Returns dict(columns, rows(list of dict), encoding, delimiter, sheet, sheets)."""
     st = get_settings()
     if len(raw) > st.max_source_mb * 1024 * 1024:
@@ -154,8 +166,14 @@ def parse_source(raw: bytes, fmt: str, *, encoding: str | None = None, delimiter
         rows.append(dict(zip(columns, vals, strict=True)))
     if len(rows) > st.max_rows:
         raise Unprocessable(f"File has more than {st.max_rows} rows", code="too_many_rows")
-    return {"columns": columns, "rows": rows, "encoding": enc, "delimiter": delim, "sheet": used_sheet,
-            "sheets": sheets}
+    return {
+        "columns": columns,
+        "rows": rows,
+        "encoding": enc,
+        "delimiter": delim,
+        "sheet": used_sheet,
+        "sheets": sheets,
+    }
 
 
 def detect_format(filename: str) -> str:
@@ -178,9 +196,16 @@ def save_source(run_id, filename: str, raw: bytes, *, encoding=None, delimiter=N
     src_path.write_bytes(raw)
     write_parsed(run_id, parsed["rows"])
     return {
-        "source_file": {"path": str(src_path), "original_name": os.path.basename(filename), "sha256": sha256_bytes(raw),
-                        "size": len(raw), "format": fmt, "delimiter": parsed["delimiter"],
-                        "encoding": parsed["encoding"], "sheet": parsed["sheet"]},
+        "source_file": {
+            "path": str(src_path),
+            "original_name": os.path.basename(filename),
+            "sha256": sha256_bytes(raw),
+            "size": len(raw),
+            "format": fmt,
+            "delimiter": parsed["delimiter"],
+            "encoding": parsed["encoding"],
+            "sheet": parsed["sheet"],
+        },
         "columns": parsed["columns"],
         "row_count": len(parsed["rows"]),
         "_preview": {"rows": parsed["rows"][:20], "sheets": parsed["sheets"]},
@@ -214,8 +239,12 @@ def save_cv(run_id, filename: str, raw: bytes) -> dict:
         raise Unprocessable(f"The CV must be at most {st.max_cv_mb} MB", code="cv_too_large")
     path = run_dir(run_id) / "cv.pdf"
     path.write_bytes(raw)
-    return {"path": str(path), "original_name": os.path.basename(filename) or "cv.pdf", "sha256": sha256_bytes(raw),
-            "size": len(raw)}
+    return {
+        "path": str(path),
+        "original_name": os.path.basename(filename) or "cv.pdf",
+        "sha256": sha256_bytes(raw),
+        "size": len(raw),
+    }
 
 
 def delete_run_files(run_id) -> None:

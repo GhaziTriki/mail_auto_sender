@@ -46,8 +46,15 @@ async def config_error_handler(_: Request, exc: ConfigError):
     return JSONResponse({"detail": str(exc), "code": "config_error"}, status_code=500)
 
 
-for r in (meta.router, senders.router, llm_keys.router, oauth_outlook.router, runs.router, items.router,
-          dashboard.router):
+for r in (
+    meta.router,
+    senders.router,
+    llm_keys.router,
+    oauth_outlook.router,
+    runs.router,
+    items.router,
+    dashboard.router,
+):
     app.include_router(r)
 
 _docs = get_settings().docs_dir

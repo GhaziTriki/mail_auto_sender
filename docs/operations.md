@@ -42,7 +42,7 @@ docker compose up --build -d
 
 Indexes are created idempotently on api start. The api and worker use the same image.
 
-The MongoDB image is `mongo:8.0` (it was `mongo:7`). An existing `mongo_data` volume is picked up as is; take a backup before the first start on the new version, since a volume opened by 8.0 is not meant to go back to 7.
+The MongoDB image is `mongo:8.2` (it was `mongo:7`, end of life since August 2026). An existing `mongo_data` volume is picked up as is; take a backup before the first start on the new version, since a volume opened by 8.x is not meant to go back to 7. Not `mongo:8.0`: its tcmalloc refuses to start on Linux kernels 6.19 and newer (MongoDB ticket SERVER-121912, closed without a fix for 8.0), which recent Docker Desktop and distribution kernels ship; 8.2 starts on both old and new kernels.
 
 ## Resetting a stuck run
 

@@ -9,7 +9,7 @@ x-app: &app
 
 services:
   mongo:
-    image: mongo:8.0
+    image: mongo:8.2
     volumes:
       - mongo_data:/data/db
     healthcheck:

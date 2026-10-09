@@ -84,10 +84,10 @@ export default function ItemDrawer({ run, item, onClose }: { run: Run; item: Ite
       <ErrorBanner error={save.error} />
       {testMsg && <div className={`mt-2 text-sm ${testMsg.ok ? "text-green-700" : "text-red-700"}`}>{testMsg.text}</div>}
       <div className="mt-4 flex items-center justify-between">
-        <button className="btn" disabled={test.isPending} onClick={() => test.mutate()}><Send size={14} /> Send me a test</button>
+        <button type="button" className="btn" disabled={test.isPending} onClick={() => test.mutate()}><Send size={14} /> Send me a test</button>
         <div className="flex gap-2">
-          <button className="btn" onClick={onClose}>Close</button>
-          {editable && <button className="btn btn-primary" disabled={!dirty || save.isPending} onClick={() => save.mutate()}>Save changes</button>}
+          <button type="button" className="btn" onClick={onClose}>Close</button>
+          {editable && <button type="button" className="btn btn-primary" disabled={!dirty || save.isPending} onClick={() => save.mutate()}>Save changes</button>}
         </div>
       </div>
     </Modal>

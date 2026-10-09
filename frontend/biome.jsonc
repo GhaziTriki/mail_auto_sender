@@ -1,0 +1,40 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "assist": { "actions": { "source": { "organizeImports": "on" } } },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "recommended",
+      "suspicious": {
+        "noExplicitAny": "warn",
+        // Row keys fall back to the index only where rows have no stable id.
+        "noArrayIndexKey": "warn"
+      },
+      "security": { "noDangerouslySetInnerHtml": "error" },
+      "correctness": {
+        // Effects here deliberately depend on a subset; tightening them changes behaviour.
+        "useExhaustiveDependencies": "warn"
+      },
+      "a11y": {
+        // The `.label` class is a caption above a field group, not a form label.
+        "noLabelWithoutControl": "off",
+        "useKeyWithClickEvents": "warn",
+        "noStaticElementInteractions": "warn",
+        "noAutofocus": "warn"
+      }
+    }
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 120,
+    "lineEnding": "lf"
+  },
+  "javascript": {
+    "formatter": { "quoteStyle": "double", "trailingCommas": "all" }
+  },
+  "files": {
+    "includes": ["**", "!**/node_modules", "!**/dist", "!**/*.css", "!openapi.json", "!src/api/schema.d.ts"]
+  }
+}

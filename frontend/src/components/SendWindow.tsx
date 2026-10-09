@@ -51,10 +51,10 @@ export default function SendWindow({ run }: { run: Run }) {
         <textarea className="input mb-4 h-72 font-mono" value={body} readOnly={!editable} onChange={(e) => setBody(e.target.value)} />
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex gap-2">
-            <button className="btn btn-primary" disabled={item.approved || send.isPending || !next.data?.sender} onClick={() => send.mutate()}><Send size={14} /> {item.approved ? "Sending…" : "Send"}</button>
-            <button className="btn" disabled={item.approved || skip.isPending} onClick={() => skip.mutate()}><SkipForward size={14} /> Skip</button>
+            <button type="button" className="btn btn-primary" disabled={item.approved || send.isPending || !next.data?.sender} onClick={() => send.mutate()}><Send size={14} /> {item.approved ? "Sending…" : "Send"}</button>
+            <button type="button" className="btn" disabled={item.approved || skip.isPending} onClick={() => skip.mutate()}><SkipForward size={14} /> Skip</button>
           </div>
-          <button className="btn" disabled={approveAll.isPending} onClick={() => window.confirm(`Approve all ${next.data?.remaining_pending} remaining emails and send them automatically with delays?`) && approveAll.mutate()}><CheckCheck size={14} /> Approve all remaining</button>
+          <button type="button" className="btn" disabled={approveAll.isPending} onClick={() => window.confirm(`Approve all ${next.data?.remaining_pending} remaining emails and send them automatically with delays?`) && approveAll.mutate()}><CheckCheck size={14} /> Approve all remaining</button>
         </div>
       </div>
     </div>

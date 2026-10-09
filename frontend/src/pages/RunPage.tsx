@@ -1,4 +1,4 @@
-import { ReactNode, useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Download, Pause, Play, Trash2, Undo2 } from "lucide-react";
@@ -64,11 +64,11 @@ export default function RunPage() {
         <div className="flex-1" />
         <Toggle checked={manual} onChange={(v) => setApproval.mutate(v ? "manual" : "auto")} label="Manual approval" />
         {r.status === "ready" && <>
-          <button className="btn btn-primary" disabled={act.isPending} onClick={startClick}><Play size={14} /> Start</button>
+          <button type="button" className="btn btn-primary" disabled={act.isPending} onClick={startClick}><Play size={14} /> Start</button>
           <ConfirmButton message="Unprepare this run? All prepared emails are deleted and the run goes back to a draft." onConfirm={() => act.mutate({ path: "unprepare" })}><Undo2 size={14} /> Unprepare</ConfirmButton>
         </>}
-        {r.status === "running" && <button className="btn" onClick={() => act.mutate({ path: "pause" })}><Pause size={14} /> Pause</button>}
-        {["paused_user", "paused_quota", "paused_llm", "paused_errors"].includes(r.status) && <button className="btn btn-primary" onClick={() => act.mutate({ path: "resume" })}><Play size={14} /> Resume</button>}
+        {r.status === "running" && <button type="button" className="btn" onClick={() => act.mutate({ path: "pause" })}><Pause size={14} /> Pause</button>}
+        {["paused_user", "paused_quota", "paused_llm", "paused_errors"].includes(r.status) && <button type="button" className="btn btn-primary" onClick={() => act.mutate({ path: "resume" })}><Play size={14} /> Resume</button>}
         <a className="btn" href={`/api/runs/${id}/export.csv`}><Download size={14} /> CSV</a>
         <ConfirmButton className="btn" message="Delete this run? Its files and emails are removed. Contacts that were already emailed stay locked, so they are never emailed twice by accident." onConfirm={() => remove.mutate()}><Trash2 size={14} /> Delete</ConfirmButton>
       </div>
@@ -81,12 +81,12 @@ export default function RunPage() {
 
       <PauseBanner run={r} problem={problem} onAction={(path, body) => act.mutate({ path, body })} refresh={refresh} />
       {r.status === "preparing" && <Notice>Preparing: classifying contacts and rendering emails…</Notice>}
-      {r.status === "ready" && manual && c.needs_review > 0 && <Notice tone="warn">{c.needs_review} contact(s) were already emailed in another run. Resolve them (Resend or Skip) before starting. <button className="underline" onClick={() => setResolve(true)}>Resolve now</button></Notice>}
+      {r.status === "ready" && manual && c.needs_review > 0 && <Notice tone="warn">{c.needs_review} contact(s) were already emailed in another run. Resolve them (Resend or Skip) before starting. <button type="button" className="underline" onClick={() => setResolve(true)}>Resolve now</button></Notice>}
       {r.status === "ready" && !manual && c.needs_review > 0 && <Notice tone="warn">{c.needs_review} already-emailed contact(s) will stay unsent unless you choose Resend in the Needs review tab.</Notice>}
 
       <div className="mb-4 flex flex-wrap gap-1 border-b border-slate-200">
         {tabs.map(([t, label, n]) => (
-          <button key={t} onClick={() => setTab(t)} className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium ${current === t ? "border-indigo-600 text-indigo-700" : "border-transparent text-slate-500 hover:text-slate-700"}`}>
+          <button type="button" key={t} onClick={() => setTab(t)} className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium ${current === t ? "border-indigo-600 text-indigo-700" : "border-transparent text-slate-500 hover:text-slate-700"}`}>
             {label}{n !== null && <span className="ml-1.5 rounded-full bg-slate-100 px-1.5 text-xs text-slate-600">{n}</span>}
           </button>
         ))}
@@ -136,8 +136,8 @@ function PauseBanner({ run, problem, onAction, refresh }: { run: Run; problem: A
         {problem?.code === "no_sender_available" && <div className="mt-1 text-xs font-medium">Still no sender is available. Add one or wait for the reset, then click Resume again.</div>}
         <div className="mt-2 flex flex-wrap gap-2">
           <Link className="btn" to="/settings/senders">Add sender</Link>
-          <button className="btn" onClick={() => setEditSenders((v) => !v)}>Choose senders for this run</button>
-          <button className="btn btn-primary" onClick={() => onAction("resume")}>Resume</button>
+          <button type="button" className="btn" onClick={() => setEditSenders((v) => !v)}>Choose senders for this run</button>
+          <button type="button" className="btn btn-primary" onClick={() => onAction("resume")}>Resume</button>
         </div>
         {editSenders && (
           <div className="mt-2 rounded-sm bg-white p-2">
@@ -162,7 +162,7 @@ function PauseBanner({ run, problem, onAction, refresh }: { run: Run; problem: A
         <div className="mt-2 flex flex-wrap gap-2">
           <Link className="btn" to="/settings/llm">Add key</Link>
           <ConfirmButton message="Switch this run to rules mode? The remaining contacts are classified by fixed rules (tagged decided by rules)." onConfirm={() => switchRules.mutate()}>Switch to rules</ConfirmButton>
-          <button className="btn btn-primary" onClick={() => onAction("resume")}>Resume</button>
+          <button type="button" className="btn btn-primary" onClick={() => onAction("resume")}>Resume</button>
         </div>
       </div>
     );
@@ -172,7 +172,7 @@ function PauseBanner({ run, problem, onAction, refresh }: { run: Run; problem: A
       <div className="mb-4 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-900">
         <div className="font-semibold">Paused after {run.consecutive_failures} consecutive failures</div>
         <ul className="mt-1 list-disc pl-5 text-xs">{(d.last_errors as string[] | undefined)?.map((e, i) => <li key={i}>{e}</li>)}</ul>
-        <div className="mt-2"><button className="btn btn-primary" onClick={() => onAction("resume")}>Resume</button></div>
+        <div className="mt-2"><button type="button" className="btn btn-primary" onClick={() => onAction("resume")}>Resume</button></div>
       </div>
     );
   }
@@ -194,8 +194,8 @@ function ResolveDialog({ run, onClose, onStart }: { run: Run; onClose: () => voi
       <p className="mb-3 text-sm text-slate-600">These contacts were already emailed in another run. Nothing is sent to them without your decision. Manual runs cannot start until all of them are resolved.</p>
       <ErrorBanner error={act.error || data.error} />
       <div className="mb-3 flex gap-2">
-        <button className="btn" disabled={!left || act.isPending} onClick={() => act.mutate({ action: "resend", status_filter: "needs_review" })}>Resend all</button>
-        <button className="btn" disabled={!left || act.isPending} onClick={() => act.mutate({ action: "skip", status_filter: "needs_review" })}>Skip all</button>
+        <button type="button" className="btn" disabled={!left || act.isPending} onClick={() => act.mutate({ action: "resend", status_filter: "needs_review" })}>Resend all</button>
+        <button type="button" className="btn" disabled={!left || act.isPending} onClick={() => act.mutate({ action: "skip", status_filter: "needs_review" })}>Skip all</button>
       </div>
       <div className="max-h-96 overflow-auto rounded-sm border border-slate-200">
         <table className="min-w-full divide-y divide-slate-200 text-sm">
@@ -205,14 +205,14 @@ function ResolveDialog({ run, onClose, onStart }: { run: Run; onClose: () => voi
               <tr key={i.id}>
                 <td className="td font-medium">{i.email_norm}</td>
                 <td className="td text-xs">{i.prior_send ? `${i.prior_send.run_name} · ${i.prior_send.sender_address} · ${fmt(i.prior_send.sent_at)}` : "-"}</td>
-                <td className="td text-right"><button className="btn mr-1" onClick={() => act.mutate({ action: "resend", item_ids: [i.id] })}>Resend</button><button className="btn" onClick={() => act.mutate({ action: "skip", item_ids: [i.id] })}>Skip</button></td>
+                <td className="td text-right"><button type="button" className="btn mr-1" onClick={() => act.mutate({ action: "resend", item_ids: [i.id] })}>Resend</button><button type="button" className="btn" onClick={() => act.mutate({ action: "skip", item_ids: [i.id] })}>Skip</button></td>
               </tr>
             ))}
           </tbody>
         </table>
         {items.length === 0 && <div className="p-4 text-center text-sm text-slate-500">All resolved.</div>}
       </div>
-      <div className="mt-4 flex justify-end gap-2"><button className="btn" onClick={onClose}>Close</button><button className="btn btn-primary" disabled={left > 0} onClick={onStart}>Start run</button></div>
+      <div className="mt-4 flex justify-end gap-2"><button type="button" className="btn" onClick={onClose}>Close</button><button type="button" className="btn btn-primary" disabled={left > 0} onClick={onStart}>Start run</button></div>
     </Modal>
   );
 }

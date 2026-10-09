@@ -20,7 +20,7 @@ export default function SettingsSenders() {
       {params.get("error") === "outlook" && <ErrorBanner error={`Outlook sign-in failed: ${params.get("detail") ?? "unknown error"}`} />}
       <div className="mb-4 flex gap-1 border-b border-slate-200">
         {(["gmail", "outlook"] as const).map((t) => (
-          <button key={t} onClick={() => setTab(t)} className={`-mb-px border-b-2 px-4 py-2 text-sm font-medium capitalize ${tab === t ? "border-indigo-600 text-indigo-700" : "border-transparent text-slate-500 hover:text-slate-700"}`}>
+          <button type="button" key={t} onClick={() => setTab(t)} className={`-mb-px border-b-2 px-4 py-2 text-sm font-medium capitalize ${tab === t ? "border-indigo-600 text-indigo-700" : "border-transparent text-slate-500 hover:text-slate-700"}`}>
             {t}
           </button>
         ))}
@@ -69,9 +69,9 @@ function SenderRow({ s }: { s: Sender }) {
             onBlur={() => Number(cap) !== s.daily_cap && upd.mutate({ daily_cap: Number(cap) })} />
         </div>
         <div className="flex gap-2">
-          {s.provider === "gmail" && <button className="btn" onClick={() => setEdit(true)}><Pencil size={14} /> Edit</button>}
-          <button className="btn" onClick={() => check.mutate()} disabled={check.isPending}><CheckCircle2 size={14} /> Check login</button>
-          {s.provider === "outlook" && s.status === "auth_failed" && <button className="btn btn-primary" onClick={() => reconnect.mutate()}><Plug size={14} /> Reconnect</button>}
+          {s.provider === "gmail" && <button type="button" className="btn" onClick={() => setEdit(true)}><Pencil size={14} /> Edit</button>}
+          <button type="button" className="btn" onClick={() => check.mutate()} disabled={check.isPending}><CheckCircle2 size={14} /> Check login</button>
+          {s.provider === "outlook" && s.status === "auth_failed" && <button type="button" className="btn btn-primary" onClick={() => reconnect.mutate()}><Plug size={14} /> Reconnect</button>}
           <ConfirmButton className="btn" message={`Delete ${s.address}? Runs using it will no longer be able to send from it.`} onConfirm={() => remove.mutate()}><Trash2 size={14} /> Delete</ConfirmButton>
         </div>
       </div>
@@ -98,7 +98,7 @@ function EditGmail({ s, onClose, onSaved }: { s: Sender; onClose: () => void; on
       <label className="label">New app password (leave empty to keep the current one)</label>
       <input className="input mb-1" type="password" autoComplete="off" value={pw} onChange={(e) => setPw(e.target.value)} />
       <p className="mb-3 text-xs text-slate-500">Secrets are write-only: the current password is never shown. After changing it, click Check login.</p>
-      <div className="flex justify-end gap-2"><button className="btn" onClick={onClose}>Cancel</button><button className="btn btn-primary" onClick={() => save.mutate()}>Save</button></div>
+      <div className="flex justify-end gap-2"><button type="button" className="btn" onClick={onClose}>Cancel</button><button type="button" className="btn btn-primary" onClick={() => save.mutate()}>Save</button></div>
     </Modal>
   );
 }
@@ -130,7 +130,7 @@ function GmailTab({ senders }: { senders: Sender[] }) {
           <div><label className="label">Daily cap</label><input className="input" type="number" min={1} value={cap} onChange={(e) => setCap(e.target.value)} placeholder={String(cfg.data?.defaults.gmail_daily_cap ?? 100)} /></div>
         </div>
         <p className="mt-2 text-xs text-slate-500">Max {cfg.data?.limits.max_gmail_daily_cap ?? 400}/day. Gmail allows about 500 per rolling 24 h for personal accounts; a lower cap avoids spam flags. After adding, click “Check login”.</p>
-        <button className="btn btn-primary mt-3" disabled={!address || !pw || add.isPending} onClick={() => add.mutate()}>Add</button>
+        <button type="button" className="btn btn-primary mt-3" disabled={!address || !pw || add.isPending} onClick={() => add.mutate()}>Add</button>
       </div>
     </div>
   );
@@ -161,7 +161,7 @@ function OutlookTab({ enabled, senders }: { enabled: boolean; senders: Sender[] 
       <ErrorBanner error={connect.error} />
       {senders.length === 0 ? <div className="mb-4"><Empty title="No Outlook accounts yet" hint="Connect one with the button below." /></div> : senders.map((s) => <SenderRow key={s.id} s={s} />)}
       <div className="flex items-center gap-3">
-        <button className="btn btn-primary" onClick={() => connect.mutate()} disabled={connect.isPending}><Plug size={14} /> Connect Outlook account</button>
+        <button type="button" className="btn btn-primary" onClick={() => connect.mutate()} disabled={connect.isPending}><Plug size={14} /> Connect Outlook account</button>
         <a className="inline-flex items-center gap-1 text-sm text-indigo-700 hover:underline" href="/docs-static/providers/outlook.md" target="_blank" rel="noreferrer"><ExternalLink size={14} /> Setup guide</a>
       </div>
       <p className="mt-2 text-xs text-slate-500">Personal-account daily limits are not documented; the default cap is conservative and editable per account.</p>

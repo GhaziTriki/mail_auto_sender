@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 import { Download } from "lucide-react";
 import type { Run } from "../api/types";
 import { fmt } from "./ui";

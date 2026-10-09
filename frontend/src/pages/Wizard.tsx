@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowDown, ArrowUp, ExternalLink, FileText, GripVertical, Upload } from "lucide-react";
@@ -44,7 +44,7 @@ export default function Wizard() {
       <ol className="mb-4 flex flex-wrap gap-1">
         {STEPS.map((s, i) => (
           <li key={s}>
-            <button onClick={() => setStep(i)} className={`rounded-full px-3 py-1 text-xs font-medium ${i === step ? "bg-indigo-600 text-white" : "bg-slate-200 text-slate-700 hover:bg-slate-300"}`}>{i + 1}. {s}</button>
+            <button type="button" onClick={() => setStep(i)} className={`rounded-full px-3 py-1 text-xs font-medium ${i === step ? "bg-indigo-600 text-white" : "bg-slate-200 text-slate-700 hover:bg-slate-300"}`}>{i + 1}. {s}</button>
           </li>
         ))}
       </ol>
@@ -78,7 +78,7 @@ function CreateRun({ onCreated }: { onCreated: (id: string) => void }) {
       <ErrorBanner error={err} />
       <label className="label">Run name</label>
       <input className="input mb-3" autoFocus value={name} placeholder="e.g. Summer internships – Tunis" onChange={(e) => setName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && name.trim() && create()} />
-      <button className="btn btn-primary" disabled={!name.trim() || busy} onClick={create}>Create draft</button>
+      <button type="button" className="btn btn-primary" disabled={!name.trim() || busy} onClick={create}>Create draft</button>
     </div>
   );
 }
@@ -90,11 +90,11 @@ function Nav({ back, next, onNext, nextLabel = "Next", disabled, extra }: { back
     <div className="mt-5 border-t border-slate-100 pt-3">
       <ErrorBanner error={err} />
       <div className="flex items-center justify-between">
-        <div>{back && <button className="btn" onClick={back}>Back</button>}</div>
+        <div>{back && <button type="button" className="btn" onClick={back}>Back</button>}</div>
         <div className="flex items-center gap-2">
           {extra}
           {next && (
-            <button className="btn btn-primary" disabled={disabled || busy} onClick={async () => {
+            <button type="button" className="btn btn-primary" disabled={disabled || busy} onClick={async () => {
               setBusy(true); setErr(null);
               try { if (onNext) await onNext(); next(); } catch (e) { setErr(e); } finally { setBusy(false); }
             }}>{nextLabel}</button>
@@ -233,8 +233,8 @@ function ValueFilter({ run, column, selected, onChange }: { run: Run; column: st
       <div className="mb-2 flex flex-wrap items-center gap-2">
         <div className="font-medium">{column}</div>
         <input className="input max-w-xs" placeholder="Search values…" value={q} onChange={(e) => setQ(e.target.value)} />
-        <button className="btn" onClick={() => onChange(Array.from(new Set([...selected, ...all])))}>Select all matches ({vals.data?.total ?? 0})</button>
-        <button className="btn" onClick={() => onChange([])}>Clear</button>
+        <button type="button" className="btn" onClick={() => onChange(Array.from(new Set([...selected, ...all])))}>Select all matches ({vals.data?.total ?? 0})</button>
+        <button type="button" className="btn" onClick={() => onChange([])}>Clear</button>
         <span className="text-xs text-slate-500">{selected.length} selected</span>
       </div>
       <ErrorBanner error={vals.error} />
@@ -435,9 +435,9 @@ function StepSenders({ run, setRun, next, back }: StepProps) {
               <span className="w-5 text-slate-400">{i + 1}.</span>
               <span className="flex-1">{s?.address ?? "(deleted sender)"} <span className="text-xs text-slate-400">{s?.provider}</span></span>
               {s && <span className="text-xs text-slate-500">{s.quota.used}/{s.quota.cap} · {s.quota.state}</span>}
-              <button className="btn px-1.5 py-0.5" onClick={() => move(i, -1)}><ArrowUp size={12} /></button>
-              <button className="btn px-1.5 py-0.5" onClick={() => move(i, 1)}><ArrowDown size={12} /></button>
-              <button className="btn px-1.5 py-0.5" onClick={() => setIds((c) => c.filter((x) => x !== id))}>Remove</button>
+              <button type="button" className="btn px-1.5 py-0.5" onClick={() => move(i, -1)}><ArrowUp size={12} /></button>
+              <button type="button" className="btn px-1.5 py-0.5" onClick={() => move(i, 1)}><ArrowDown size={12} /></button>
+              <button type="button" className="btn px-1.5 py-0.5" onClick={() => setIds((c) => c.filter((x) => x !== id))}>Remove</button>
             </div>
           );
         })}
@@ -445,7 +445,7 @@ function StepSenders({ run, setRun, next, back }: StepProps) {
       <div>
         <div className="label">Add a sender</div>
         <div className="flex flex-wrap gap-2">
-          {available.map((s) => <button key={s.id} className="btn" onClick={() => setIds((c) => [...c, s.id])}>+ {s.address}</button>)}
+          {available.map((s) => <button type="button" key={s.id} className="btn" onClick={() => setIds((c) => [...c, s.id])}>+ {s.address}</button>)}
           <Link className="btn" to="/settings/senders">Add Gmail account <ExternalLink size={12} /></Link>
           {cfg.data?.providers.outlook ? <Link className="btn" to="/settings/senders">Connect Outlook</Link> : <span className="self-center text-xs text-slate-500">Outlook is not activated (see Senders → Outlook).</span>}
         </div>
@@ -498,10 +498,10 @@ function StepReview({ run, back, go, reload }: StepProps & { go: (i: number) => 
       <ErrorBanner error={err} />
       {Object.keys(fields).length > 0 && <ul className="mb-3 list-disc pl-5 text-sm text-red-700">{Object.entries(fields).map(([k, v]) => <li key={k}>{k}: {v}</li>)}</ul>}
       <table className="mb-3 w-full text-sm"><tbody>{rows.map(([k, v, s]) => (
-        <tr key={k} className="border-b border-slate-100"><td className="w-44 py-1.5 text-slate-500">{k}</td><td className="py-1.5">{v}</td><td className="w-16 text-right"><button className="text-xs text-indigo-700 hover:underline" onClick={() => go(s)}>Edit</button></td></tr>
+        <tr key={k} className="border-b border-slate-100"><td className="w-44 py-1.5 text-slate-500">{k}</td><td className="py-1.5">{v}</td><td className="w-16 text-right"><button type="button" className="text-xs text-indigo-700 hover:underline" onClick={() => go(s)}>Edit</button></td></tr>
       ))}</tbody></table>
       <Notice>Preparing builds one email per contact and classifies names. Nothing is sent until you start the run.</Notice>
-      <div className="flex items-center justify-between"><button className="btn" onClick={back}>Back</button><button className="btn btn-primary" disabled={busy} onClick={prepare}>{busy ? "Preparing…" : "Prepare"}</button></div>
+      <div className="flex items-center justify-between"><button type="button" className="btn" onClick={back}>Back</button><button type="button" className="btn btn-primary" disabled={busy} onClick={prepare}>{busy ? "Preparing…" : "Prepare"}</button></div>
     </div>
   );
 }

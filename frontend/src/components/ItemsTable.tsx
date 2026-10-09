@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { get, post } from "../api/client";
 import type { Item, ItemStatus, Paged, Run } from "../api/types";
@@ -69,7 +69,7 @@ export default function ItemsTable({ run, statuses, columns, actions = [], empty
         <div className="flex-1" />
         {extraHeader}
         {actions.map((a) => (
-          <button key={a.action + a.label} className={`btn ${a.primary ? "btn-primary" : ""}`} disabled={selected.size === 0 || bulk.isPending} onClick={() => run_(a)}>{a.label}{selected.size ? ` (${selected.size})` : ""}</button>
+          <button type="button" key={a.action + a.label} className={`btn ${a.primary ? "btn-primary" : ""}`} disabled={selected.size === 0 || bulk.isPending} onClick={() => run_(a)}>{a.label}{selected.size ? ` (${selected.size})` : ""}</button>
         ))}
       </div>
       <ErrorBanner error={data.error || bulk.error} />
@@ -93,9 +93,9 @@ export default function ItemsTable({ run, statuses, columns, actions = [], empty
       )}
       {total > 50 && (
         <div className="mt-3 flex items-center justify-end gap-2 text-sm">
-          <button className="btn" disabled={page <= 1} onClick={() => setPage(page - 1)}>Previous</button>
+          <button type="button" className="btn" disabled={page <= 1} onClick={() => setPage(page - 1)}>Previous</button>
           <span>Page {page} / {Math.ceil(total / 50)}</span>
-          <button className="btn" disabled={page >= Math.ceil(total / 50)} onClick={() => setPage(page + 1)}>Next</button>
+          <button type="button" className="btn" disabled={page >= Math.ceil(total / 50)} onClick={() => setPage(page + 1)}>Next</button>
         </div>
       )}
       {open && <ItemDrawer run={run} item={open} onClose={() => setOpen(null)} />}

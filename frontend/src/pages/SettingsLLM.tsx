@@ -38,7 +38,7 @@ export default function SettingsLLM() {
           <div><label className="label">API key</label><input className="input" type="password" autoComplete="off" value={apiKey} onChange={(e) => setApiKey(e.target.value)} /></div>
           <div><label className="label">Daily cap (requests)</label><input className="input" type="number" min={1} value={cap} onChange={(e) => setCap(e.target.value)} placeholder={String(cfg.data?.defaults.llm_daily_cap ?? 200)} /></div>
         </div>
-        <button className="btn btn-primary mt-3" disabled={!label || !apiKey || add.isPending} onClick={() => add.mutate()}>Add key</button>
+        <button type="button" className="btn btn-primary mt-3" disabled={!label || !apiKey || add.isPending} onClick={() => add.mutate()}>Add key</button>
       </div>
     </div>
   );
@@ -66,7 +66,7 @@ function KeyRow({ k, onChange }: { k: LlmKey; onChange: () => void }) {
           <input className="input w-20" type="number" min={1} value={cap} onChange={(e) => setCap(e.target.value)} onBlur={() => Number(cap) !== k.daily_cap && upd.mutate({ daily_cap: Number(cap) })} />
         </div>
         <div className="flex gap-2">
-          <button className="btn" onClick={() => check.mutate()} disabled={check.isPending}><CheckCircle2 size={14} /> Check</button>
+          <button type="button" className="btn" onClick={() => check.mutate()} disabled={check.isPending}><CheckCircle2 size={14} /> Check</button>
           <ConfirmButton message={`Delete key "${k.label}"?`} onConfirm={() => remove.mutate()}><Trash2 size={14} /> Delete</ConfirmButton>
         </div>
       </div>

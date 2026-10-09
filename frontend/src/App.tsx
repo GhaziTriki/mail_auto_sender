@@ -16,10 +16,18 @@ export default function App() {
         <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-2">
           <div className="text-lg font-bold text-indigo-700">ApplyMail</div>
           <nav className="flex flex-wrap items-center gap-1">
-            <NavLink to="/" end className={link}><LayoutDashboard size={15} /> Dashboard</NavLink>
-            <NavLink to="/runs/new" className={link}><PlusCircle size={15} /> New run</NavLink>
-            <NavLink to="/settings/senders" className={link}><Mail size={15} /> Senders</NavLink>
-            <NavLink to="/settings/llm" className={link}><KeyRound size={15} /> LLM keys</NavLink>
+            <NavLink to="/" end className={link}>
+              <LayoutDashboard size={15} /> Dashboard
+            </NavLink>
+            <NavLink to="/runs/new" className={link}>
+              <PlusCircle size={15} /> New run
+            </NavLink>
+            <NavLink to="/settings/senders" className={link}>
+              <Mail size={15} /> Senders
+            </NavLink>
+            <NavLink to="/settings/llm" className={link}>
+              <KeyRound size={15} /> LLM keys
+            </NavLink>
           </nav>
         </div>
       </header>

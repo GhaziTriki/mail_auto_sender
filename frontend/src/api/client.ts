@@ -10,7 +10,10 @@ export class ApiError extends Error {
   }
 }
 
-export async function api<T = any>(path: string, opts: { method?: string; json?: unknown; form?: FormData } = {}): Promise<T> {
+export async function api<T = any>(
+  path: string,
+  opts: { method?: string; json?: unknown; form?: FormData } = {},
+): Promise<T> {
   const init: RequestInit = { method: opts.method ?? (opts.json || opts.form ? "POST" : "GET") };
   if (opts.json !== undefined) {
     init.headers = { "Content-Type": "application/json" };

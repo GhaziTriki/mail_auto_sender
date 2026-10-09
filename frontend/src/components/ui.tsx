@@ -30,7 +30,9 @@ const CHIP: Record<string, string> = {
 
 export function StatusChip({ status }: { status: string }) {
   return (
-    <span className={`inline-block whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ${CHIP[status] ?? "bg-slate-100 text-slate-700"}`}>
+    <span
+      className={`inline-block whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ${CHIP[status] ?? "bg-slate-100 text-slate-700"}`}
+    >
       {status.replace(/_/g, " ")}
     </span>
   );
@@ -92,10 +94,23 @@ export function QuotaBar({ q, label }: { q: Quota; label?: string }) {
   );
 }
 
-export function Modal({ title, children, onClose, wide }: { title: string; children: ReactNode; onClose: () => void; wide?: boolean }) {
+export function Modal({
+  title,
+  children,
+  onClose,
+  wide,
+}: {
+  title: string;
+  children: ReactNode;
+  onClose: () => void;
+  wide?: boolean;
+}) {
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
-      <div className={`max-h-[90vh] w-full overflow-auto rounded-lg bg-white p-5 shadow-xl ${wide ? "max-w-4xl" : "max-w-lg"}`} onClick={(e) => e.stopPropagation()}>
+      <div
+        className={`max-h-[90vh] w-full overflow-auto rounded-lg bg-white p-5 shadow-xl ${wide ? "max-w-4xl" : "max-w-lg"}`}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="mb-3 flex items-center justify-between">
           <h3 className="text-lg font-semibold">{title}</h3>
           <button type="button" className="rounded-sm p-1 hover:bg-slate-100" onClick={onClose} aria-label="Close">
@@ -109,10 +124,21 @@ export function Modal({ title, children, onClose, wide }: { title: string; child
 }
 
 export function ConfirmButton({
-  children, message, onConfirm, className = "btn", disabled,
-}: { children: ReactNode; message: string; onConfirm: () => void; className?: string; disabled?: boolean }) {
+  children,
+  message,
+  onConfirm,
+  className = "btn",
+  disabled,
+}: {
+  children: ReactNode;
+  message: string;
+  onConfirm: () => void;
+  className?: string;
+  disabled?: boolean;
+}) {
   return (
-    <button type="button"
+    <button
+      type="button"
       className={className}
       disabled={disabled}
       onClick={() => {
@@ -124,7 +150,15 @@ export function ConfirmButton({
   );
 }
 
-export function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
+export function Toggle({
+  checked,
+  onChange,
+  label,
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  label: string;
+}) {
   return (
     <label className="inline-flex cursor-pointer items-center gap-2 text-sm">
       <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />

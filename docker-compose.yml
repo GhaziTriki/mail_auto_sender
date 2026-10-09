@@ -1,0 +1,67 @@
+x-app: &app
+  build: .
+  env_file: .env
+  environment:
+    MONGO_URL: ${MONGO_URL:-mongodb://mongo:27017/applymail}
+  volumes:
+    - data:/data
+  restart: unless-stopped
+
+services:
+  mongo:
+    image: mongo:7
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  api:
+    <<: *app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      mongo:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8000/api/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  worker:
+    <<: *app
+    command: python -m app.worker
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  mailpit:
+    image: axllent/mailpit
+    profiles: ["dev"]
+    ports:
+      - "127.0.0.1:8025:8025"
+      - "127.0.0.1:1025:1025"
+    restart: unless-stopped
+
+  test:
+    build: .
+    profiles: ["test"]
+    command: pytest -q
+    environment:
+      MONGO_URL: mongodb://mongo:27017/applymail_test
+      SECRET_KEY: ${SECRET_KEY:-}
+      DATA_DIR: /tmp/applymail-test
+      LLM_FAKE: "1"
+      USE_REAL_MONGO: "1"
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+volumes:
+  mongo_data:
+  data:

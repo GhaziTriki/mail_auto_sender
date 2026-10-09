@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "applymail"
+version = "1.0.0"
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi",
+  "uvicorn[standard]",
+  "pydantic>=2",
+  "pymongo>=4.10",
+  "pandas",
+  "openpyxl",
+  "charset-normalizer",
+  "email-validator",
+  "cryptography",
+  "httpx",
+  "google-genai",
+  "python-multipart",
+  "tzdata",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-timeout", "ruff", "mongomock"]
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[tool.setuptools.package-data]
+app = ["static/**/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+timeout = 60
+
+[tool.ruff]
+line-length = 110

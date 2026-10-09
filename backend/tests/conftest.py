@@ -72,6 +72,7 @@ def db(settings):
     dbmod.ensure_indexes(database)
     yield database
     dbmod.set_db(None)
+    client.close()
 
 
 @pytest.fixture()

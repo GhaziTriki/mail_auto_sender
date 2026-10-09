@@ -10,6 +10,12 @@ x-app: &app
 services:
   mongo:
     image: mongo:8.2
+    # MongoDB wants at least 64000 open files; Docker's default soft limit (1024 on many
+    # Linux hosts) makes WiredTiger abort with "too many open files" under load.
+    ulimits:
+      nofile:
+        soft: 64000
+        hard: 64000
     volumes:
       - mongo_data:/data/db
     healthcheck:

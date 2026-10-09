@@ -172,7 +172,11 @@ export default function Status() {
           <Row label="Unknown outcome" value={s.items?.unknown} />
         </Card>
 
-        <Card icon={<Users size={16} />} title="Senders and providers" ok={s.senders ? s.senders.available > 0 : false}>
+        <Card
+          icon={<Users size={16} />}
+          title="Senders and providers"
+          ok={s.senders ? (s.senders.total === 0 ? null : s.senders.available > 0) : false}
+        >
           <Row label="Senders" value={s.senders?.total} />
           <Row label="Available now" value={s.senders?.available} />
           <Row label="Exhausted (24 h cap)" value={s.senders?.exhausted} />

@@ -41,33 +41,33 @@ export default function ItemDrawer({ run, item, onClose }: { run: Run; item: Ite
 
   return (
     <Modal title={item.email_norm ?? `Row ${item.row_index + 2}`} onClose={onClose} wide>
-      <div className="mb-3 flex flex-wrap items-center gap-2 text-sm"><StatusChip status={item.status} />{item.edited && <span className="rounded bg-sky-100 px-2 text-xs text-sky-800">edited</span>}{item.approved && <span className="rounded bg-emerald-100 px-2 text-xs text-emerald-800">approved</span>}</div>
+      <div className="mb-3 flex flex-wrap items-center gap-2 text-sm"><StatusChip status={item.status} />{item.edited && <span className="rounded-sm bg-sky-100 px-2 text-xs text-sky-800">edited</span>}{item.approved && <span className="rounded-sm bg-emerald-100 px-2 text-xs text-emerald-800">approved</span>}</div>
       <div className="mb-4 grid gap-3 text-sm md:grid-cols-2">
-        <div className="rounded bg-slate-50 p-3">
+        <div className="rounded-sm bg-slate-50 p-3">
           <div className="label">Contact line used</div>
           <div>Column: <b>{item.contact_line.column}</b></div>
           <div className="break-all">Raw cell: <code>{item.contact_line.raw || "(empty)"}</code></div>
           <div>Extracted address: <b>{item.contact_line.email ?? "none"}</b></div>
         </div>
-        <div className="rounded bg-slate-50 p-3">
+        <div className="rounded-sm bg-slate-50 p-3">
           <div className="label">Greeting decision</div>
           <div>Kind: <b>{item.kind ?? "-"}</b> · decided by <b>{item.decided_by ?? "-"}</b></div>
           <div>Name: {item.name ?? "-"} · Company: {item.company ?? "-"} · Honorific: {item.honorific ?? "-"}</div>
-          <div>Warnings: {item.warnings.length ? item.warnings.map((w) => <span key={w} className="mr-1 rounded bg-amber-100 px-1.5 text-xs text-amber-800">{w}</span>) : "none"}</div>
+          <div>Warnings: {item.warnings.length ? item.warnings.map((w) => <span key={w} className="mr-1 rounded-sm bg-amber-100 px-1.5 text-xs text-amber-800">{w}</span>) : "none"}</div>
         </div>
         {item.status === "pending" && (
-          <div className="rounded bg-slate-50 p-3 md:col-span-2">
+          <div className="rounded-sm bg-slate-50 p-3 md:col-span-2">
             <div className="label">Sender that will be used</div>
             {next.data?.sender ? <b>{next.data.sender.address} <span className="text-xs font-normal text-slate-500">({next.data.sender.provider})</span></b> : <span className="text-orange-700">No sender is available right now.</span>}
           </div>
         )}
         {item.prior_send && (
-          <div className="rounded bg-amber-50 p-3 md:col-span-2 text-amber-900">
+          <div className="rounded-sm bg-amber-50 p-3 md:col-span-2 text-amber-900">
             Already sent{item.prior_send.uncertain ? " (uncertain)" : ""} in run <b>{item.prior_send.run_name}</b> from {item.prior_send.sender_address} on {fmt(item.prior_send.sent_at)}.
           </div>
         )}
-        {item.status === "sent" && <div className="rounded bg-green-50 p-3 md:col-span-2 text-green-900">Sent from {item.sender_address} at {fmt(item.sent_at)}.</div>}
-        {lastAttempt && ["failed", "unknown", "pending"].includes(item.status) && <div className="rounded bg-red-50 p-3 md:col-span-2 text-red-900">Last attempt: {lastAttempt.outcome} — {lastAttempt.detail}</div>}
+        {item.status === "sent" && <div className="rounded-sm bg-green-50 p-3 md:col-span-2 text-green-900">Sent from {item.sender_address} at {fmt(item.sent_at)}.</div>}
+        {lastAttempt && ["failed", "unknown", "pending"].includes(item.status) && <div className="rounded-sm bg-red-50 p-3 md:col-span-2 text-red-900">Last attempt: {lastAttempt.outcome} — {lastAttempt.detail}</div>}
       </div>
       {editable && (
         <div className="mb-3 grid gap-3 md:grid-cols-3">

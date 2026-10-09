@@ -57,7 +57,7 @@ export default function ItemsTable({ run, statuses, columns, actions = [], empty
       case "error": return <span className="text-xs text-red-700">{lastErr(i)}</span>;
       case "prior": return i.prior_send ? <span className="text-xs">{i.prior_send.run_name} · {i.prior_send.sender_address} · {fmt(i.prior_send.sent_at)}{i.prior_send.uncertain ? " (uncertain)" : ""}</span> : <span className="text-xs text-slate-400">{i.duplicate_reason === "duplicate_in_run" ? "duplicate in this run" : "-"}</span>;
       case "status": return <StatusChip status={i.status} />;
-      case "warnings": return i.warnings.map((w) => <span key={w} className="mr-1 rounded bg-amber-100 px-1.5 text-xs text-amber-800">{w}</span>);
+      case "warnings": return i.warnings.map((w) => <span key={w} className="mr-1 rounded-sm bg-amber-100 px-1.5 text-xs text-amber-800">{w}</span>);
       default: return null;
     }
   };
@@ -74,7 +74,7 @@ export default function ItemsTable({ run, statuses, columns, actions = [], empty
       </div>
       <ErrorBanner error={data.error || bulk.error} />
       {items.length === 0 && !data.isLoading ? <Empty {...empty} /> : (
-        <div className="overflow-x-auto rounded border border-slate-200 bg-white">
+        <div className="overflow-x-auto rounded-sm border border-slate-200 bg-white">
           <table className="min-w-full divide-y divide-slate-200">
             <thead className="bg-slate-50"><tr>
               {actions.length > 0 && <th className="th w-8"><input type="checkbox" checked={allOnPage} onChange={() => setSelected(allOnPage ? new Set() : new Set(items.map((i) => i.id)))} /></th>}

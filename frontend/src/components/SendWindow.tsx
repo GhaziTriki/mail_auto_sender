@@ -42,8 +42,8 @@ export default function SendWindow({ run }: { run: Run }) {
       <div className="card">
         <div className="mb-3 flex items-center justify-between text-sm"><span>{next.data?.remaining_pending} pending</span>{item.approved && <StatusChip status="sending" />}</div>
         <div className="mb-3 grid gap-3 text-sm md:grid-cols-2">
-          <div className="rounded bg-slate-50 p-3"><div className="label">To (contact line used)</div><div className="text-base font-semibold">{item.contact_line.email}</div><div className="text-xs text-slate-500">column “{item.contact_line.column}”, cell “{item.contact_line.raw}”</div></div>
-          <div className="rounded bg-slate-50 p-3"><div className="label">From</div>{next.data?.sender ? <div className="text-base font-semibold">{next.data.sender.address}</div> : <div className="text-orange-700">No sender available</div>}<div className="text-xs text-slate-500">{item.kind} · decided by {item.decided_by}{item.warnings.length ? ` · warnings: ${item.warnings.join(", ")}` : ""}</div></div>
+          <div className="rounded-sm bg-slate-50 p-3"><div className="label">To (contact line used)</div><div className="text-base font-semibold">{item.contact_line.email}</div><div className="text-xs text-slate-500">column “{item.contact_line.column}”, cell “{item.contact_line.raw}”</div></div>
+          <div className="rounded-sm bg-slate-50 p-3"><div className="label">From</div>{next.data?.sender ? <div className="text-base font-semibold">{next.data.sender.address}</div> : <div className="text-orange-700">No sender available</div>}<div className="text-xs text-slate-500">{item.kind} · decided by {item.decided_by}{item.warnings.length ? ` · warnings: ${item.warnings.join(", ")}` : ""}</div></div>
         </div>
         <label className="label">Subject</label>
         <input className="input mb-3" value={subject} readOnly={!editable} onChange={(e) => setSubject(e.target.value)} />

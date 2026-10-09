@@ -169,7 +169,7 @@ function StepFiles({ run, reload, setRun, next }: StepProps) {
             )}
           </div>
           {preview.length > 0 && (
-            <div className="overflow-x-auto rounded border border-slate-200">
+            <div className="overflow-x-auto rounded-sm border border-slate-200">
               <table className="min-w-full text-xs">
                 <thead className="bg-slate-50"><tr>{cols.map((c) => <th key={c} className="th whitespace-nowrap">{c}</th>)}</tr></thead>
                 <tbody className="divide-y divide-slate-100">{preview.slice(0, 20).map((row, i) => <tr key={i}>{cols.map((c) => <td key={c} className="px-3 py-1 whitespace-nowrap">{row[c]}</td>)}</tr>)}</tbody>
@@ -204,7 +204,7 @@ function StepColumns({ run, setRun, next, back }: StepProps) {
       {run.columns.length === 0 ? <Empty title="No columns yet" hint="Upload a contacts file in step 1." /> : (
         <div className="grid gap-2 md:grid-cols-2">
           {run.columns.map((c) => (
-            <label key={c} className={`flex cursor-pointer items-start gap-2 rounded border p-2 text-sm ${chosen.includes(c) ? "border-indigo-400 bg-indigo-50" : "border-slate-200"}`}>
+            <label key={c} className={`flex cursor-pointer items-start gap-2 rounded-sm border p-2 text-sm ${chosen.includes(c) ? "border-indigo-400 bg-indigo-50" : "border-slate-200"}`}>
               <input type="checkbox" className="mt-1" checked={chosen.includes(c)} onChange={() => toggle(c)} />
               <span><span className="font-medium">{c}</span><span className="block text-xs text-slate-500">{samples[c]?.join(" · ") || "(no sample)"}</span></span>
             </label>
@@ -229,7 +229,7 @@ function ValueFilter({ run, column, selected, onChange }: { run: Run; column: st
   const toggle = (v: string) => onChange(sel.has(v) ? selected.filter((x) => x !== v) : [...selected, v]);
   const all = vals.data?.all_values ?? vals.data?.values.map((v) => v.value) ?? [];
   return (
-    <div className="rounded border border-slate-200 p-3">
+    <div className="rounded-sm border border-slate-200 p-3">
       <div className="mb-2 flex flex-wrap items-center gap-2">
         <div className="font-medium">{column}</div>
         <input className="input max-w-xs" placeholder="Search values…" value={q} onChange={(e) => setQ(e.target.value)} />
@@ -240,7 +240,7 @@ function ValueFilter({ run, column, selected, onChange }: { run: Run; column: st
       <ErrorBanner error={vals.error} />
       <div className="grid max-h-64 gap-1 overflow-auto sm:grid-cols-2 lg:grid-cols-3">
         {vals.data?.values.map((v) => (
-          <label key={v.value} className="flex cursor-pointer items-center gap-2 rounded px-1 text-sm hover:bg-slate-50">
+          <label key={v.value} className="flex cursor-pointer items-center gap-2 rounded-sm px-1 text-sm hover:bg-slate-50">
             <input type="checkbox" checked={sel.has(v.value)} onChange={() => toggle(v.value)} />
             <span className="truncate">{label(v.value)}</span><span className="ml-auto text-xs text-slate-400">{v.count}</span>
           </label>
@@ -263,7 +263,7 @@ function StepFilters({ run, setRun, next, back }: StepProps) {
   return (
     <div>
       <ErrorBanner error={err} />
-      <div className="mb-3 rounded bg-slate-50 p-3 text-sm">
+      <div className="mb-3 rounded-sm bg-slate-50 p-3 text-sm">
         Matching rows: <b>{count?.matching_rows ?? "…"}</b> of {run.row_count}
         {run.recipient.email_column && count && <> · with a valid email: <b>{count.with_valid_email}</b></>}
         <div className="text-xs text-slate-500">A row matches when, for every filter column, its value is one of the selected values. Columns with nothing selected are ignored.</div>
@@ -281,7 +281,7 @@ function MultiSelect({ label, options, value, onChange, hint }: { label: string;
   return (
     <div>
       <label className="label">{label}</label>
-      <div className="flex max-h-40 flex-wrap gap-1 overflow-auto rounded border border-slate-200 p-2">
+      <div className="flex max-h-40 flex-wrap gap-1 overflow-auto rounded-sm border border-slate-200 p-2">
         {options.map((o) => (
           <button key={o} type="button" onClick={() => onChange(value.includes(o) ? value.filter((x) => x !== o) : [...value, o])}
             className={`rounded-full px-2 py-0.5 text-xs ${value.includes(o) ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}>{o}</button>
@@ -335,7 +335,7 @@ function StepGreeting({ run, setRun, next, back }: StepProps) {
     <div className="space-y-4">
       <div className="flex gap-3">
         {(["rules", "llm"] as const).map((m) => (
-          <label key={m} className={`flex-1 cursor-pointer rounded border p-3 text-sm ${mode === m ? "border-indigo-500 bg-indigo-50" : "border-slate-200"}`}>
+          <label key={m} className={`flex-1 cursor-pointer rounded-sm border p-3 text-sm ${mode === m ? "border-indigo-500 bg-indigo-50" : "border-slate-200"}`}>
             <input type="radio" className="mr-2" checked={mode === m} onChange={() => setMode(m)} />
             <b>{m === "rules" ? "Rules" : "LLM (Gemini)"}</b>
             <div className="mt-1 text-xs text-slate-600">{m === "rules" ? "Fixed rules, no external service. Nothing leaves your machine." : "Gemini decides person vs company and cleans names (never writes the email body)."}</div>
@@ -394,7 +394,7 @@ function StepContent({ run, setRun, next, back }: StepProps) {
     <div>
       <div className="mb-3">
         <div className="label">Insert placeholder (into the field you last clicked)</div>
-        <div className="flex max-h-28 flex-wrap gap-1 overflow-auto">{tokens.map((t) => <button key={t} type="button" className="rounded bg-slate-100 px-2 py-0.5 font-mono text-xs hover:bg-indigo-100" onClick={() => insert(t)}>{t}</button>)}</div>
+        <div className="flex max-h-28 flex-wrap gap-1 overflow-auto">{tokens.map((t) => <button key={t} type="button" className="rounded-sm bg-slate-100 px-2 py-0.5 font-mono text-xs hover:bg-indigo-100" onClick={() => insert(t)}>{t}</button>)}</div>
       </div>
       <label className="label">Subject</label>
       <input ref={subjRef} className="input mb-3" value={subject} onFocus={() => setLast("subject")} onChange={(e) => setSubject(e.target.value)} />
@@ -430,7 +430,7 @@ function StepSenders({ run, setRun, next, back }: StepProps) {
           return (
             <div key={id} draggable onDragStart={() => setDrag(i)} onDragOver={(e) => e.preventDefault()}
               onDrop={() => { if (drag === null || drag === i) return; setIds((cur) => { const a = [...cur]; const [m] = a.splice(drag, 1); a.splice(i, 0, m); return a; }); setDrag(null); }}
-              className="mb-1 flex items-center gap-2 rounded border border-slate-200 bg-white px-2 py-1.5 text-sm">
+              className="mb-1 flex items-center gap-2 rounded-sm border border-slate-200 bg-white px-2 py-1.5 text-sm">
               <GripVertical size={14} className="cursor-grab text-slate-400" />
               <span className="w-5 text-slate-400">{i + 1}.</span>
               <span className="flex-1">{s?.address ?? "(deleted sender)"} <span className="text-xs text-slate-400">{s?.provider}</span></span>

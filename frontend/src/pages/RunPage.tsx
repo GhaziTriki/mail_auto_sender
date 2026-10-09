@@ -140,7 +140,7 @@ function PauseBanner({ run, problem, onAction, refresh }: { run: Run; problem: A
           <button className="btn btn-primary" onClick={() => onAction("resume")}>Resume</button>
         </div>
         {editSenders && (
-          <div className="mt-2 rounded bg-white p-2">
+          <div className="mt-2 rounded-sm bg-white p-2">
             {senders.data?.map((s) => (
               <label key={s.id} className="mr-4 inline-flex items-center gap-1 text-sm text-slate-800">
                 <input type="checkbox" checked={run.sender_ids.includes(s.id)} onChange={() => setIds.mutate(run.sender_ids.includes(s.id) ? run.sender_ids.filter((x) => x !== s.id) : [...run.sender_ids, s.id])} />{s.address} <span className="text-xs text-slate-500">{s.quota.used}/{s.quota.cap} {s.quota.state}</span>
@@ -197,7 +197,7 @@ function ResolveDialog({ run, onClose, onStart }: { run: Run; onClose: () => voi
         <button className="btn" disabled={!left || act.isPending} onClick={() => act.mutate({ action: "resend", status_filter: "needs_review" })}>Resend all</button>
         <button className="btn" disabled={!left || act.isPending} onClick={() => act.mutate({ action: "skip", status_filter: "needs_review" })}>Skip all</button>
       </div>
-      <div className="max-h-96 overflow-auto rounded border border-slate-200">
+      <div className="max-h-96 overflow-auto rounded-sm border border-slate-200">
         <table className="min-w-full divide-y divide-slate-200 text-sm">
           <thead className="bg-slate-50"><tr><th className="th">Email</th><th className="th">Previously sent</th><th className="th"></th></tr></thead>
           <tbody className="divide-y divide-slate-100">

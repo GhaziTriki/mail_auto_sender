@@ -60,14 +60,13 @@ def _oids(values) -> list:
     for v in values or []:
         try:
             out.append(v if isinstance(v, ObjectId) else ObjectId(v))
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             raise Unprocessable("Invalid id in list", code="invalid_id") from e
     return out
 
 
 def patch_run(run: dict, patch: dict) -> dict:
     db = get_db()
-    s = get_settings()
     patch = {k: v for k, v in patch.items() if v is not None or k in ("reply_to", "tz_hint")}
     status = run["status"]
     locked = run.get("first_send_at") is not None
@@ -75,10 +74,9 @@ def patch_run(run: dict, patch: dict) -> dict:
     needs_rerender = False
 
     touched_locked = LOCKED_FIELDS & set(patch)
-    if locked and touched_locked:
-        # the only allowed locked-field change is the llm->rules switch handled below
-        if not (touched_locked <= {"mode", "rules"} and status == "paused_llm"):
-            raise ConfigLocked("Configuration is locked after the first email was sent")
+    # the only allowed locked-field change is the llm->rules switch handled below
+    if locked and touched_locked and not (touched_locked <= {"mode", "rules"} and status == "paused_llm"):
+        raise ConfigLocked("Configuration is locked after the first email was sent")
 
     if "name" in patch:
         name = patch["name"].strip()
@@ -94,7 +92,7 @@ def patch_run(run: dict, patch: dict) -> dict:
     if "recipient" in patch:
         rec = patch["recipient"]
         cols = set(run.get("columns") or [])
-        for c in [rec.get("email_column")] + list(rec.get("human_name_columns") or []) + list(rec.get("company_name_columns") or []):
+        for c in [rec.get("email_column"), *(rec.get("human_name_columns") or []), *(rec.get("company_name_columns") or [])]:
             if c and cols and c not in cols:
                 raise Unprocessable(f"Unknown column: {c}", code="unknown_column")
         upd["recipient"] = {"email_column": rec.get("email_column"),
@@ -259,8 +257,7 @@ def reopen_if_completed(run_id) -> None:
 
 
 def counts(run_id) -> dict:
-    out = {k: 0 for k in ("pending", "sending", "sent", "failed", "no_contact", "needs_review", "skipped_duplicate",
-                          "skipped_user", "unknown")}
+    out = dict.fromkeys(("pending", "sending", "sent", "failed", "no_contact", "needs_review", "skipped_duplicate", "skipped_user", "unknown"), 0)
     for r in get_db().run_items.aggregate([{"$match": {"run_id": run_id}}, {"$group": {"_id": "$status", "n": {"$sum": 1}}}]):
         out[r["_id"]] = r["n"]
     out["total"] = sum(out.values())

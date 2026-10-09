@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import io
 import smtplib
-import socket
 from datetime import timedelta
 
 import pytest
@@ -52,7 +51,7 @@ def test_filters_and_or_empty_and_accent_search():
 
 # 3 --------------------------------------------------------------------------------------------
 def test_importer_encodings_delimiters_headers(settings):
-    utf8 = "Nom;Email\nÉlodie;e@x.fr\n".encode("utf-8")
+    utf8 = "Nom;Email\nÉlodie;e@x.fr\n".encode()
     p = importer.parse_source(utf8, "csv")
     assert p["delimiter"] == ";" and p["rows"][0]["Nom"] == "Élodie"
     latin = "Nom,Email\nJosé,j@x.es\n".encode("latin-1")
@@ -175,8 +174,8 @@ def test_smtp_mapping():
     assert map_smtp_error(smtplib.SMTPServerDisconnected("gone"), "connect").outcome == "transient"
     assert map_smtp_error(smtplib.SMTPServerDisconnected("gone"), "rcpt").outcome == "transient"
     assert map_smtp_error(smtplib.SMTPServerDisconnected("gone"), "data").outcome == "unknown"
-    assert map_smtp_error(socket.timeout("t"), "data").outcome == "unknown"
-    assert map_smtp_error(socket.timeout("t"), "auth").outcome == "transient"
+    assert map_smtp_error(TimeoutError("t"), "data").outcome == "unknown"
+    assert map_smtp_error(TimeoutError("t"), "auth").outcome == "transient"
     assert map_smtp_error(ConnectionResetError("r"), "data").outcome == "unknown"
 
 

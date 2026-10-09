@@ -8,6 +8,7 @@ import pytest
 
 from app import clock
 from app.db import get_db
+from app.errors import Unprocessable
 from app.providers.base import SendResult
 from app.worker.loop import tick
 from app.worker.recovery import recover_expired_leases
@@ -433,7 +434,8 @@ def test_rerun_failed_mark_sent_and_completed_reopens(client, provider):
     rid = ready_started(client, "rr1", many(3, "z"))
     provider.queue += [SendResult("permanent", "bad", recipient_specific=True), SendResult("unknown", "lost")]
     assert drain(client, rid) == "completed"
-    failed, unknown = items(client, rid, "failed")[0], items(client, rid, "unknown")[0]
+    assert items(client, rid, "failed")
+    unknown = items(client, rid, "unknown")[0]
     r = client.post(f"/api/runs/{rid}/items/bulk", json={"action": "mark_sent", "item_ids": [unknown["id"]]})
     assert r.json()["changed"] == 1
     cur = items(client, rid, "sent")
@@ -541,5 +543,5 @@ def test_header_injection_rejected(client, provider):
     assert r.status_code == 422
     from app.providers.base import OutgoingEmail
     from app.providers.message import build_message
-    with pytest.raises(Exception):
+    with pytest.raises(Unprocessable):
         build_message(OutgoingEmail("N", "a@b.com", "x@y.com\nBcc: e@e.com", None, "s", "b", "cv.pdf", b"%PDF"))

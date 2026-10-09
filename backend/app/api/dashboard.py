@@ -19,7 +19,7 @@ router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
 def summary(from_: str | None = Query(None, alias="from"), to: str | None = None, tz: str = "UTC"):
     try:
         zone = ZoneInfo(tz)
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         raise Unprocessable("Unknown time zone", code="invalid_tz") from e
     db = get_db()
     now = clock.now()

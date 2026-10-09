@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import os
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 from cryptography.fernet import Fernet
 
-from app import clock, crypto, db as dbmod
+from app import clock, crypto
+from app import db as dbmod
 from app.config import Settings, set_settings
 from app.providers import registry
 from app.providers.base import CheckResult, SendResult
@@ -49,7 +50,7 @@ def settings(tmp_path):
 def db(settings):
     if USING_REAL_MONGO:
         from pymongo import MongoClient
-        client = MongoClient(REAL_MONGO, tz_aware=True, tzinfo=timezone.utc)
+        client = MongoClient(REAL_MONGO, tz_aware=True, tzinfo=UTC)
         database = client.get_default_database(default="applymail_test")
         client.drop_database(database.name)
     else:
@@ -64,7 +65,7 @@ def db(settings):
 
 @pytest.fixture()
 def frozen(db):
-    clock.freeze(datetime(2026, 10, 7, 12, 0, tzinfo=timezone.utc))
+    clock.freeze(datetime(2026, 10, 7, 12, 0, tzinfo=UTC))
     yield clock
     clock.unfreeze()
 
@@ -80,6 +81,7 @@ def provider(frozen):
 @pytest.fixture()
 def client(db, provider):
     from fastapi.testclient import TestClient
+
     from app.main import app
     with TestClient(app) as c:
         yield c

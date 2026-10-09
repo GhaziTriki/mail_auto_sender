@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import timezone
+from datetime import UTC
 
 from pymongo import ASCENDING, MongoClient
 from pymongo.database import Database
@@ -21,7 +21,7 @@ def get_db() -> Database:
     global _client, _db
     if _db is None:
         s = get_settings()
-        _client = MongoClient(s.mongo_url, tz_aware=True, tzinfo=timezone.utc, serverSelectionTimeoutMS=10000)
+        _client = MongoClient(s.mongo_url, tz_aware=True, tzinfo=UTC, serverSelectionTimeoutMS=10000)
         _db = _client.get_default_database(default="applymail")
     return _db
 

@@ -135,7 +135,7 @@ def rules_result(run: dict, item: dict, extra_warning: str | None = None) -> dic
     res = classify_rules(run.get("rules", {}).get("kind", "human_if_available"), run["recipient"], item["row"],
                          item["email_norm"])
     if extra_warning:
-        res["warnings"] = list(res["warnings"]) + [extra_warning]
+        res["warnings"] = [*res["warnings"], extra_warning]
     return res
 
 

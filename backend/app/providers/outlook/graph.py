@@ -58,7 +58,7 @@ def _expires_soon(blob: dict) -> bool:
     from datetime import datetime
     try:
         exp = clock.as_utc(datetime.fromisoformat(blob["expires_at"]))
-    except Exception:  # noqa: BLE001
+    except Exception:
         return True
     return exp - clock.now() <= timedelta(seconds=120)
 
@@ -116,7 +116,7 @@ class OutlookProvider:
         except oauth.OAuthError as e:
             return CheckResult(False, f"{e.code}: {e.detail}", auth_failed=e.code in ("invalid_grant", "http_401",
                                                                                        "interaction_required"))
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             return CheckResult(False, f"{type(e).__name__}: {e}")
 
     def _post(self, access: str, email: OutgoingEmail):

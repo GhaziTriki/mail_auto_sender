@@ -74,17 +74,16 @@ def bulk_action(run: dict, action: str, item_ids=None, status_filter=None) -> di
                 if res.modified_count:
                     changed += 1
                     created_pending = True
-        elif action == "mark_sent":
-            if st == "unknown":
-                res = db.run_items.update_one({"_id": it["_id"], "status": "unknown"}, {"$set": {
-                    "status": "sent", "sent_at": it.get("attempted_at") or now, "updated_at": now}})
-                if res.modified_count and it.get("contact_id") is not None:
-                    db.contacts.update_one({"_id": it["contact_id"]}, {"$set": {
-                        "sent_info": {"run_id": run["_id"], "run_name": run.get("name"),
-                                      "sender_address": it.get("sender_address"),
-                                      "sent_at": it.get("attempted_at") or now, "subject": it.get("subject"),
-                                      "uncertain": False}}})
-                changed += res.modified_count
+        elif action == "mark_sent" and st == "unknown":
+            res = db.run_items.update_one({"_id": it["_id"], "status": "unknown"}, {"$set": {
+                "status": "sent", "sent_at": it.get("attempted_at") or now, "updated_at": now}})
+            if res.modified_count and it.get("contact_id") is not None:
+                db.contacts.update_one({"_id": it["contact_id"]}, {"$set": {
+                    "sent_info": {"run_id": run["_id"], "run_name": run.get("name"),
+                                  "sender_address": it.get("sender_address"),
+                                  "sent_at": it.get("attempted_at") or now, "subject": it.get("subject"),
+                                  "uncertain": False}}})
+            changed += res.modified_count
     if created_pending:
         reopen_if_completed(run["_id"])
     return {"action": action, "changed": changed, "selected": len(items)}

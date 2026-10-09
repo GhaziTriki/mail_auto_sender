@@ -14,7 +14,7 @@ def validate_secret_key(key: str | None = None) -> Fernet:
         raise ConfigError("SECRET_KEY is required. Generate one with scripts/gen-secret-key.sh")
     try:
         return Fernet(key.encode())
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         raise ConfigError(f"SECRET_KEY is not a valid Fernet key: {e}") from e
 
 

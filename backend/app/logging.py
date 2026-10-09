@@ -4,7 +4,7 @@ import json
 import logging
 import re
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 _REDACT_KEYS = {"secret", "secret_enc", "app_password", "password", "api_key", "token", "access_token",
                 "refresh_token", "body", "authorization", "contentbytes"}
@@ -37,7 +37,7 @@ def redact(value):
 class JsonFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
         data = {
-            "ts": datetime.fromtimestamp(record.created, timezone.utc).isoformat(),
+            "ts": datetime.fromtimestamp(record.created, UTC).isoformat(),
             "level": record.levelname,
             "logger": record.name,
             "msg": redact_text(record.getMessage()),

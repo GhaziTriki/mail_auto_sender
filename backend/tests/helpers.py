@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-
 from app import clock
 from app.crypto import encrypt
 from app.db import get_db

@@ -90,7 +90,7 @@ def pick_sender(sender_ids: list) -> tuple[dict | None, dict]:
         if r is None:
             return s, {}
         reasons.append({"id": str(sid), "address": s.get("address"), "reason": r})
-        if r in ("cap", "blocked") and q["resets_at"] is not None:
-            if earliest is None or q["resets_at"] < earliest:
-                earliest = q["resets_at"]
+        if (r in ("cap", "blocked") and q["resets_at"] is not None
+                and (earliest is None or q["resets_at"] < earliest)):
+            earliest = q["resets_at"]
     return None, {"earliest_reset_at": earliest, "senders": reasons}

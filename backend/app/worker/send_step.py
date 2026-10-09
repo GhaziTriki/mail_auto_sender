@@ -46,7 +46,6 @@ def _claim(run: dict):
 def send_unit(run: dict) -> str:
     """Run one send unit. Returns a short tag describing what happened (used by tests)."""
     db = get_db()
-    s = get_settings()
     sender, detail = pick_sender(run.get("sender_ids") or [])
     if sender is None:
         busy = db.run_items.count_documents({"run_id": run["_id"], "status": {"$in": ["pending", "sending"]}})
@@ -88,7 +87,7 @@ def send_unit(run: dict) -> str:
     try:
         email = build_outgoing(run, sender, item)
         result = get_provider(sender["provider"]).send(sender, email)
-    except Exception as e:  # noqa: BLE001  - a crash inside the provider call after this point is ambiguous
+    except Exception as e:
         log.exception("provider raised", extra={"item_id": item["_id"], "run_id": run["_id"]})
         result = SendResult("unknown", f"unexpected error: {type(e).__name__}")
     return _handle_outcome(run, sender, item, result, log_id, locked)

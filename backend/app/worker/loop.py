@@ -22,14 +22,14 @@ def tick() -> dict:
         try:
             classify_unit(run)
             stats["classified_runs"] += 1
-        except Exception:  # noqa: BLE001
+        except Exception:
             log.exception("classification unit failed", extra={"run_id": run["_id"]})
     now = clock.now()
     for run in list(db.runs.find({"status": "running", "$or": [{"next_send_at": None}, {"next_send_at": {"$lte": now}}]})):
         try:
             send_unit(run)
             stats["send_units"] += 1
-        except Exception:  # noqa: BLE001
+        except Exception:
             log.exception("send unit failed", extra={"run_id": run["_id"]})
     return stats
 
@@ -40,6 +40,6 @@ def run_forever() -> None:
     while True:
         try:
             tick()
-        except Exception:  # noqa: BLE001
+        except Exception:
             log.exception("worker tick failed")
         time.sleep(tick_s)

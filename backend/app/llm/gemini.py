@@ -50,7 +50,7 @@ def classify_exception(exc: BaseException) -> LLMError:
     code = getattr(exc, "code", None) or getattr(exc, "status_code", None)
     text = f"{type(exc).__name__}: {exc}"
     low = text.lower()
-    if code == 429 or "resource_exhausted" in low or "429" in low and "quota" in low:
+    if code == 429 or "resource_exhausted" in low or ("429" in low and "quota" in low):
         return LLMError("quota", text[:300])
     if code in (400, 401, 403) or "api key not valid" in low or "api_key_invalid" in low or "permission_denied" in low:
         return LLMError("auth", text[:300])
@@ -62,7 +62,7 @@ def call_gemini(api_key: str, payload: list[dict]) -> list:
     try:
         from google import genai
         from google.genai import types
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         raise LLMError("transient", f"google-genai not available: {e}") from e
     try:
         client = genai.Client(api_key=api_key)
@@ -77,7 +77,7 @@ def call_gemini(api_key: str, payload: list[dict]) -> list:
             ),
         )
         text = resp.text or "[]"
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         raise classify_exception(e) from e
     try:
         data = json.loads(text)

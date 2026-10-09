@@ -48,7 +48,7 @@ def _token_request(data: dict) -> dict:
         r = c.post(AUTHORITY + "token", data=data)
     try:
         body = r.json()
-    except Exception:  # noqa: BLE001
+    except Exception:
         body = {}
     if r.status_code != 200 or "access_token" not in body:
         raise OAuthError(body.get("error", f"http_{r.status_code}"), body.get("error_description", r.text[:200]))

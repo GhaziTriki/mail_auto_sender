@@ -40,7 +40,8 @@ class FakeSMTP:
 
     def _handle(self, conn):
         f = conn.makefile("rwb")
-        f.write(b"220 fake\r\n"); f.flush()
+        f.write(b"220 fake\r\n")
+        f.flush()
         while True:
             line = f.readline()
             if not line:
@@ -53,20 +54,22 @@ class FakeSMTP:
             elif cmd.startswith(b"RCPT"):
                 f.write(self.rcpt_reply + b"\r\n")
             elif cmd == b"DATA":
-                f.write(b"354 go\r\n"); f.flush()
+                f.write(b"354 go\r\n")
+                f.flush()
                 buf = b""
                 while True:
-                    l = f.readline()
-                    if l == b".\r\n":
+                    line = f.readline()
+                    if line == b".\r\n":
                         break
-                    buf += l
+                    buf += line
                 if self.data_mode == "drop":
                     conn.close()
                     return
                 self.messages.append(buf)
                 f.write(b"250 queued\r\n")
             elif cmd == b"QUIT":
-                f.write(b"221 bye\r\n"); f.flush()
+                f.write(b"221 bye\r\n")
+                f.flush()
                 conn.close()
                 return
             else:
@@ -116,7 +119,10 @@ def test_gmail_disconnect_during_data_is_unknown(smtp_settings, db, frozen):
 
 
 def test_gmail_connect_failure_is_transient(smtp_settings, db, frozen):
-    s = socket.socket(); s.bind(("127.0.0.1", 0)); port = s.getsockname()[1]; s.close()
+    s = socket.socket()
+    s.bind(("127.0.0.1", 0))
+    port = s.getsockname()[1]
+    s.close()
     smtp_settings.gmail_smtp_port = port
     sender = db.senders.find_one({"_id": add_sender("sender@gmail.com")})
     assert GmailProvider().send(sender, _email()).outcome == "transient"
@@ -260,7 +266,7 @@ def test_outlook_start_disabled_returns_422(client):
 
 
 def test_outlook_send_success_payload(outlook, db):
-    state, calls = outlook
+    state, _calls = outlook
     s = db.senders.find_one({"_id": _outlook_sender(db)})
     email = OutgoingEmail("Me", "me@outlook.com", "to@x.com", "reply@x.com", "Subj", "Body", "cv.pdf", PDF)
     res = get_provider("outlook").send(s, email)

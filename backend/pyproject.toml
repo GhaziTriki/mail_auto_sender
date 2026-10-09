@@ -47,3 +47,28 @@ app = ["static/**/*"]
 testpaths = ["tests"]
 pythonpath = ["."]
 timeout = 60
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+extend-exclude = [".venv"]
+
+[tool.ruff.lint]
+select = [
+  "E",   # pycodestyle errors
+  "W",   # pycodestyle warnings
+  "F",   # Pyflakes
+  "I",   # isort
+  "UP",  # pyupgrade
+  "B",   # flake8-bugbear
+  "SIM", # flake8-simplify
+  "C4",  # flake8-comprehensions
+  "RUF", # Ruff-specific rules
+]
+ignore = [
+  "E501", # line-too-long: the code is dense by design; the limit above is advisory
+  "B008", # function-call-in-default-argument: FastAPI's File(...) and Query(...) idiom
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["RUF012"]

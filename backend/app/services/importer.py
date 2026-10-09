@@ -41,9 +41,9 @@ def detect_encoding(raw: bytes) -> str:
             try:
                 raw.decode(enc)
                 return enc
-            except Exception:  # noqa: BLE001
+            except Exception:
                 print()
-    except Exception:  # noqa: BLE001
+    except Exception:
         print()
     return "latin-1"
 
@@ -86,7 +86,7 @@ def _parse_csv(raw: bytes, encoding: str | None, delimiter: str | None) -> tuple
         raise Unprocessable(f"Cannot decode file with encoding {enc}: {e}", code="bad_encoding") from e
     delim = delimiter or detect_delimiter(text)
     reader = csv.reader(io.StringIO(text, newline=""), delimiter=delim)
-    rows = [r for r in reader]
+    rows = list(reader)
     if not rows:
         raise Unprocessable("The file is empty", code="empty_file")
     return rows[0], rows[1:], enc, delim
@@ -113,7 +113,7 @@ def _parse_xlsx(raw: bytes, sheet: str | None) -> tuple[list[str], list[list[str
     from openpyxl import load_workbook
     try:
         wb = load_workbook(io.BytesIO(raw), read_only=True, data_only=True)
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         raise Unprocessable(f"Cannot read the XLSX file: {e}", code="bad_xlsx") from e
     try:
         names = list(wb.sheetnames)
@@ -151,7 +151,7 @@ def parse_source(raw: bytes, fmt: str, *, encoding: str | None = None, delimiter
         if not any(vals):
             continue
         vals = (vals + [""] * len(columns))[: len(columns)]
-        rows.append(dict(zip(columns, vals)))
+        rows.append(dict(zip(columns, vals, strict=True)))
     if len(rows) > st.max_rows:
         raise Unprocessable(f"File has more than {st.max_rows} rows", code="too_many_rows")
     return {"columns": columns, "rows": rows, "encoding": enc, "delimiter": delim, "sheet": used_sheet,

@@ -14,7 +14,7 @@ def health():
     try:
         get_db().command("ping")
         return {"status": "ok"}
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         from fastapi.responses import JSONResponse
         return JSONResponse({"status": "error", "detail": type(e).__name__}, status_code=503)
 

@@ -1,0 +1,27 @@
+# LF everywhere: the shell scripts and Dockerfile must run the same on Windows
+# checkouts (Docker Desktop, WSL, Git Bash) as on Linux and macOS.
+* text=auto eol=lf
+
+*.sh text eol=lf
+*.py text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+Dockerfile text eol=lf
+
+# Binary: never diffed, never converted.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.xlsx binary
+*.woff binary
+*.woff2 binary
+
+# Generated: collapsed in reviews.
+package-lock.json linguist-generated -diff
+uv.lock linguist-generated -diff

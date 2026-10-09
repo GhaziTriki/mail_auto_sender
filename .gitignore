@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+.venv/
+venv/
+
+# Build outputs
+dist/
+build/
+*.tsbuildinfo
+backend/app/static/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.egg-info/
+
+# Environment: only the example is tracked
+.env
+.env.*
+!.env.example
+
+# Local data and backups
+backups/
+data/
+
+# Tests and coverage
+coverage/
+htmlcov/
+.coverage
+.coverage.*
+
+# Generated API schema (npm run gen:api)
+frontend/openapi.json
+frontend/src/api/schema.d.ts
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+*.log

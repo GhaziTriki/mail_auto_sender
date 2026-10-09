@@ -1,10 +1,11 @@
+import { Activity, KeyRound, LayoutDashboard, Mail, PlusCircle } from "lucide-react";
 import { NavLink, Route, Routes } from "react-router-dom";
-import { LayoutDashboard, Mail, KeyRound, PlusCircle } from "lucide-react";
 import Dashboard from "./pages/Dashboard";
-import Wizard from "./pages/Wizard";
 import RunPage from "./pages/RunPage";
-import SettingsSenders from "./pages/SettingsSenders";
 import SettingsLLM from "./pages/SettingsLLM";
+import SettingsSenders from "./pages/SettingsSenders";
+import Status from "./pages/Status";
+import Wizard from "./pages/Wizard";
 
 const link = ({ isActive }: { isActive: boolean }) =>
   `flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium ${isActive ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-100"}`;
@@ -28,6 +29,9 @@ export default function App() {
             <NavLink to="/settings/llm" className={link}>
               <KeyRound size={15} /> LLM keys
             </NavLink>
+            <NavLink to="/status" className={link}>
+              <Activity size={15} /> Status
+            </NavLink>
           </nav>
         </div>
       </header>
@@ -39,6 +43,7 @@ export default function App() {
           <Route path="/runs/:id" element={<RunPage />} />
           <Route path="/settings/senders" element={<SettingsSenders />} />
           <Route path="/settings/llm" element={<SettingsLLM />} />
+          <Route path="/status" element={<Status />} />
           <Route path="*" element={<div className="card">Page not found.</div>} />
         </Routes>
       </main>

@@ -197,3 +197,28 @@ export const LLM_WARNING =
   "In LLM mode, contact names and email addresses are sent to Google Gemini. On the free tier, Google may use prompts to improve its products.";
 export const LLM_QUOTA_WARNING =
   "~200 requests/day per Google project; keys in the same project share quota; contact data is sent to Gemini; free-tier prompts may be used by Google.";
+
+export type SystemHealth = "ok" | "degraded" | "error";
+
+export interface SystemStatus {
+  status: SystemHealth;
+  checked_at: string;
+  api: { version: string; python: string; started_at: string; uptime_s: number };
+  database: { ok: boolean; name: string | null; latency_ms: number | null; error: string | null };
+  worker: {
+    ok: boolean;
+    state: "alive" | "stale" | "never" | "unknown";
+    last_tick_at: string | null;
+    age_s: number | null;
+    started_at: string | null;
+    tick_s: number;
+    host: string | null;
+    last_error: string | null;
+  };
+  // Absent when the database is down (HTTP 503).
+  runs?: { by_status: Record<RunStatus, number>; active: number };
+  items?: Record<"pending" | "sending" | "failed" | "needs_review" | "unknown", number>;
+  senders?: { total: number; available: number; exhausted: number; idle: number; auth_failed: number };
+  providers: Record<string, boolean>;
+  llm: { model: string; fake: boolean };
+}

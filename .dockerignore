@@ -1,6 +1,13 @@
 .env
+.env.*
+!.env.example
 backups
 **/node_modules
 **/__pycache__
+**/.venv
+**/.pytest_cache
+**/.ruff_cache
 frontend/dist
+docs/audits
 .git
+.github

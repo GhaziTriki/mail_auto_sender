@@ -8,6 +8,7 @@ from .. import clock
 from ..config import get_settings
 from ..db import get_db
 from ..logging import get_logger
+from . import heartbeat
 from .classify_step import classify_unit
 from .recovery import recover_expired_leases
 from .send_step import send_unit
@@ -34,15 +35,18 @@ def tick() -> dict:
             stats["send_units"] += 1
         except Exception:
             log.exception("send unit failed", extra={"run_id": run["_id"]})
+    heartbeat.beat(stats)
     return stats
 
 
 def run_forever() -> None:
     tick_s = get_settings().worker_tick_s
+    heartbeat.mark_started()
     log.info("worker started")
     while True:
         try:
             tick()
-        except Exception:
+        except Exception as e:
             log.exception("worker tick failed")
+            heartbeat.beat(None, error=type(e).__name__)
         time.sleep(tick_s)

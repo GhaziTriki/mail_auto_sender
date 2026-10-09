@@ -1,5 +1,9 @@
 # Operations
 
+## Health
+
+Open <http://localhost:8000/status>, or `curl -s localhost:8000/api/health` for the one-line check Docker uses and `curl -s localhost:8000/api/status` for the full picture (api, database, worker heartbeat, runs, emails in flight, senders). The worker writes a heartbeat after every tick; the page marks it `stale` after three silent ticks and `never` when it has not started.
+
 ## Logs
 
 ```
@@ -37,6 +41,8 @@ docker compose up --build -d
 ```
 
 Indexes are created idempotently on api start. The api and worker use the same image.
+
+The MongoDB image is `mongo:8.0` (it was `mongo:7`). An existing `mongo_data` volume is picked up as is; take a backup before the first start on the new version, since a volume opened by 8.0 is not meant to go back to 7.
 
 ## Resetting a stuck run
 

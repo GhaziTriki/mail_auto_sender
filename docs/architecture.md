@@ -19,6 +19,7 @@ mailpit (profile "dev")                    │   data volume /data  (runs/<id>/s
 | `runs` | A batch and everything the user chose | See spec §5.5; unique `name_lower`. Counts are aggregated from `run_items`, never stored. |
 | `run_items` | One per contact per run = the email | Row snapshot, classification, rendered subject/body, `status`, attempts. Indexes `(run_id,status,row_index)`, `(run_id,email_norm)`, `(contact_id)`, `(status,lease_until)`. |
 | `oauth_states` | Outlook sign-in handshake | `state` (unique), `code_verifier`; TTL 10 minutes. |
+| `worker_status` | Worker heartbeat, one document (`_id: "worker"`) | `started_at`, `last_tick_at`, `last_error` (exception class name), `last_stats`, `host`, `pid`, `tick_s`. Written after every tick; read by `GET /api/status`. |
 
 **Derived sender quota** (`services/quota.py`, never stored): `used = count(send_log, sender, at >= now-24h)`; exhausted if `used >= daily_cap` or `blocked_until > now`; `resets_at = max(blocked_until, sorted_at[used-cap] + 24h)`. Gemini keys use a Pacific-day counter that resets lazily when `day_key` changes.
 
@@ -34,7 +35,7 @@ Before a provider call the worker runs `contacts.find_one_and_update({_id, sent_
 
 ## 4. Worker algorithm
 
-Every `WORKER_TICK_S` (2 s):
+Every `WORKER_TICK_S` (2 s), ending with a heartbeat in `worker_status` (also written, with the exception class name, when a tick fails):
 
 1. **Recovery:** `sending` items with an expired lease become `unknown` (lock kept, `uncertain=true`). Never auto-resent.
 2. **Classification** for each `preparing` run: rules mode classifies instantly; LLM mode sends one batch of 20 (honouring `next_llm_at`), validates the JSON, retries only missing ids with smaller batches (up to 2 retries), then falls back to rules with `llm_failed`. No usable key → `paused_llm`.
@@ -89,7 +90,7 @@ Choices made where the spec was ambiguous (simplest option consistent with the g
 - **Items that are not sendable** (`no_contact`, `skipped_duplicate`) are stored with `classified=true`; `needs_review` items are classified like pending ones so a later Resend has a rendered email.
 - **LLM bookkeeping:** `llm_attempts` is a per-item counter. Transient Gemini errors (5xx/network) change no key or item state; the batch is retried on the next tick. Every request that reached Google increments `used_today`.
 - **Sender/key lists** return `quota` objects computed on read; `blocked_until` is not exposed.
-- **API additions** beyond the spec list: `POST /api/runs/{id}/approve-all` ("Approve all remaining" switches the run to auto), `GET /api/oauth/outlook/start` returns `{url}` as JSON (the browser then navigates to it), `POST /api/senders` is a thin alias of `/api/senders/gmail`.
+- **API additions** beyond the spec list: `POST /api/runs/{id}/approve-all` ("Approve all remaining" switches the run to auto), `GET /api/oauth/outlook/start` returns `{url}` as JSON (the browser then navigates to it), `POST /api/senders` is a thin alias of `/api/senders/gmail`, `GET /api/status` aggregates api, database, worker heartbeat and queue counts for the Status page (`degraded` when the worker is silent for more than three ticks plus 5 s or its last tick failed; `503` and `error` when MongoDB does not answer).
 - **Wizard autosave** happens when you leave a step (Next) and on blur of the run name, not on every keystroke.
 - **Frontend types** are hand-written in `src/api/types.ts`. The `npm run gen:api` script (openapi-typescript) is provided and writes `src/api/schema.d.ts`, but the app does not import the generated file yet.
 - **Dashboard dates** are local days converted to UTC bounds in the browser; the daily chart buckets by the browser's time zone (`tz` parameter).

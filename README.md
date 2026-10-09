@@ -51,7 +51,9 @@ docker compose logs -f api worker  # Ctrl+C to stop following
 
 Then open <http://localhost:8000>. If the `api` container exits immediately, `SECRET_KEY` is missing or not a valid key (see Troubleshooting).
 
-The app refuses to start without a valid `SECRET_KEY`. Keep that key: stored passwords and tokens cannot be decrypted without it. The app is published on `127.0.0.1` only. If port 8000 is already in use, change the left side of `"127.0.0.1:8000:8000"` in `docker-compose.yml` (and `APP_BASE_URL` / `OUTLOOK_REDIRECT_URI` if you use them).
+The **Status** page (<http://localhost:8000/status>, also in the top menu) shows the same thing from inside the app: API version and uptime, database reachability, the worker's last heartbeat, runs by status, emails in flight and sender availability. It refreshes every 5 seconds and tells you what to do when something is off. The raw data is `GET /api/status` (`200` ok or degraded, `503` when the database is down); `GET /api/health` stays the one-line check used by Docker.
+
+The app refuses to start without a valid `SECRET_KEY`. Keep that key: stored passwords and tokens cannot be decrypted without it. `.env` is ignored by git; if a copy was ever committed or shared, treat the key as leaked: generate a new one, then delete and re-add senders and LLM keys. The app is published on `127.0.0.1` only. If port 8000 is already in use, change the left side of `"127.0.0.1:8000:8000"` in `docker-compose.yml` (and `APP_BASE_URL` / `OUTLOOK_REDIRECT_URI` if you use them).
 
 ### First-run checklist
 
@@ -136,7 +138,7 @@ The app refuses to start without a valid `SECRET_KEY`. Keep that key: stored pas
 2. **Manual approval:** use the **Send window** (Send / Skip / Approve all remaining). **Automatic:** Start and let it run with delays.
 3. If the run pauses, the banner tells you why and what to do.
 4. Handle **Failed** (Rerun selected), **Unknown** (Mark as sent / Rerun) and **Needs review** (Resend / Skip).
-5. The **Dashboard** shows totals, sent-per-day and each sender's quota.
+5. The **Dashboard** shows totals, sent-per-day and each sender's quota; the **Status** page shows whether the API, the database and the worker are healthy.
 
 ## Troubleshooting
 
@@ -168,6 +170,42 @@ The app refuses to start without a valid `SECRET_KEY`. Keep that key: stored pas
 | `docker: command not found` / daemon not running (Windows) | Start Docker Desktop and wait until it says it is running. |
 | `bad interpreter` / `\r` error running `scripts/*.sh` | Windows line endings: `dos2unix scripts/*.sh`, or use the PowerShell commands. |
 | Port 8000 already in use | Change the host port in `docker-compose.yml`. |
+| Status page: worker `never` or `stale` | The worker container is not running or is stuck: `docker compose ps worker`, `docker compose logs worker`, then `docker compose up -d worker`. |
+| Status page: database unreachable | `docker compose ps mongo` and `docker compose logs mongo`; the api keeps answering `503` on `/api/status` until MongoDB is back. |
+
+## Development
+
+Everything runs in Docker, so this section is only for working on the code. Python 3.13 (installed by uv on demand) and Node 24 (`.nvmrc`).
+
+```bash
+cd backend
+uv sync --extra dev                  # virtualenv in backend/.venv from uv.lock
+uv run pytest -q                     # tests on mongomock, no services needed
+uv run ruff check . && uv run ruff format --check .
+
+cd frontend
+npm ci
+npm run dev                          # Vite on :5173, proxies /api to 127.0.0.1:8000
+npm run lint && npm run format:check && npm run build
+```
+
+`uv run uvicorn app.main:app --reload` and `uv run python -m app.worker` run the api and the worker against a MongoDB of your own (`MONGO_URL`). Tests against a real MongoDB: `docker compose --profile test run --rm test`.
+
+CI (`.github/workflows/ci.yml`) runs the same lint, format, test and build steps plus a Docker build on every push and pull request.
+
+## Repository layout
+
+```
+backend/          FastAPI api + worker (one package, `app`), tests, pyproject.toml, uv.lock
+  app/api/        HTTP routes            app/services/   run, item, quota and lock logic
+  app/worker/     tick loop, heartbeat   app/providers/  Gmail SMTP, Outlook Graph
+  app/llm/        Gemini and rules classification
+frontend/         React 19 + Vite 8 + Tailwind 4, TypeScript, Biome
+  src/pages/      one file per screen    src/components/ shared pieces   src/api/  client and types
+docs/             architecture, operations, provider guides, audit snapshots
+scripts/          backup, restore, secret-key generation
+Dockerfile        one image for api and worker; docker-compose.yml wires mongo, api, worker, mailpit, test
+```
 
 ## Backup / restore
 

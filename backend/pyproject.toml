@@ -5,25 +5,37 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "applymail"
 version = "1.0.0"
+description = "Sends personalised internship-application emails in controlled, resumable runs"
 requires-python = ">=3.12"
 dependencies = [
-  "fastapi",
-  "uvicorn[standard]",
-  "pydantic>=2",
-  "pymongo>=4.10",
-  "pandas",
-  "openpyxl",
-  "charset-normalizer",
-  "email-validator",
-  "cryptography",
-  "httpx",
-  "google-genai",
-  "python-multipart",
-  "tzdata",
+  # Web framework and server
+  "fastapi>=0.143.0",
+  "uvicorn[standard]>=0.54.0",
+  "pydantic>=2.14.0",
+  # Storage
+  "pymongo>=4.18.3",
+  # Contacts import (CSV / XLSX) and encoding detection
+  "pandas>=3.0.6",
+  "openpyxl>=3.1.5",
+  "charset-normalizer>=3.5.2",
+  "email-validator>=2.3.0",
+  # Secrets at rest (Fernet)
+  "cryptography>=50.0.2",
+  # Outlook Graph calls and the Gemini client
+  "httpx>=0.28.1",
+  "google-genai>=2.29.0",
+  # Multipart uploads and time zones
+  "python-multipart>=0.0.32",
+  "tzdata>=2026.5",
 ]
 
 [project.optional-dependencies]
-dev = ["pytest", "pytest-timeout", "ruff", "mongomock"]
+dev = [
+  "pytest>=9.1.1",
+  "pytest-timeout>=2.4.0",
+  "ruff>=0.16.10",
+  "mongomock>=4.3.0",
+]
 
 [tool.setuptools.packages.find]
 include = ["app*"]
@@ -33,7 +45,5 @@ app = ["static/**/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]
 timeout = 60
-
-[tool.ruff]
-line-length = 110
